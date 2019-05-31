@@ -31,14 +31,15 @@ void	create_window(int max_x, int max_y)
 	start_y = 100;
 	while (start_y <= 700)
 	{
+		start_x = 100;
 		while (start_x <= 700)
 		{
-			mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
 			if ((start_y - 100) % gap == 0)
-				mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
+			 	mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
 			else if ((start_x - 100) % gap == 0)
 				mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
 			start_x++;
+			// printf("y:%d x:%d\n", start_y, start_x);
 		}
 		start_y++;
 	}
