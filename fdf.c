@@ -13,7 +13,7 @@
 #include "fdf.h"
 #include <stdio.h>
 
-void	create_window(t_list *coord_list, int max_x, int max_y)
+void	create_window(int max_x, int max_y)
 {
 	void	*mlx_ptr;
 	void	*win_ptr;
@@ -23,15 +23,24 @@ void	create_window(t_list *coord_list, int max_x, int max_y)
 
 	mlx_ptr = mlx_init();
 	win_ptr = mlx_new_window(mlx_ptr, 800, 800, "fdf");
-	if max_x > max_y
+	if (max_x > max_y)
 		gap = 600 / max_x;
 	else
 		gap = 600 / max_y;
 	start_x = 100;
 	start_y = 100;
-	while (start_x <= 800 - 100 && start_y <= 800 - 100)
+	while (start_y <= 700)
 	{
-		if (start_y % gap == 0)
+		while (start_x <= 700)
+		{
+			mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
+			if ((start_y - 100) % gap == 0)
+				mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
+			else if ((start_x - 100) % gap == 0)
+				mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
+			start_x++;
+		}
+		start_y++;
 	}
 	mlx_loop(mlx_ptr);
 }
@@ -108,7 +117,7 @@ void	read_map(char *filename)
 	while (get_next_line(fd, &line))
 		coord_list = get_coords(line, y++, coord_list, &max_x);
 	ft_lstreverse(&coord_list);
-	create_window(coord_list, max_x, y);
+	create_window(max_x, y);
 }
 
 int		main(int argc, char **argv)
