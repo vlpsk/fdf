@@ -13,6 +13,29 @@
 #include "fdf.h"
 #include <stdio.h>
 
+void	create_window(t_list *coord_list, int max_x, int max_y)
+{
+	void	*mlx_ptr;
+	void	*win_ptr;
+	int		gap;
+	int	 	start_x;
+	int		start_y;
+
+	mlx_ptr = mlx_init();
+	win_ptr = mlx_new_window(mlx_ptr, 800, 800, "fdf");
+	if max_x > max_y
+		gap = 600 / max_x;
+	else
+		gap = 600 / max_y;
+	start_x = 100;
+	start_y = 100;
+	while (start_x <= 800 - 100 && start_y <= 800 - 100)
+	{
+		if (start_y % gap == 0)
+	}
+	mlx_loop(mlx_ptr);
+}
+
 void	ft_lstreverse(t_list **begin_list)
 {
 	t_list *first;
@@ -42,7 +65,7 @@ void	ft_lstreverse(t_list **begin_list)
 	*begin_list = first;
 }
 
-t_list	*get_coords(char *line, int y, t_list *coord_list)
+t_list	*get_coords(char *line, int y, t_list *coord_list, int *max_x)
 {
 	int		x;
 	int		z;
@@ -64,6 +87,7 @@ t_list	*get_coords(char *line, int y, t_list *coord_list)
 			ft_lstadd(&coord_list, ft_lstnew(coord, sizeof(coord)));
 		x++;
 	}
+	*max_x = x;
 	return (coord_list);
 }
 
@@ -72,6 +96,7 @@ void	read_map(char *filename)
 	int		fd;
 	char	*line;
 	int		y;
+	int		max_x;
 	t_list	*coord_list;
 
 	fd = open(filename, O_RDONLY);
@@ -79,14 +104,11 @@ void	read_map(char *filename)
 		return ;
 	y = 0;
 	coord_list = NULL;
+	max_x = 0;
 	while (get_next_line(fd, &line))
-		coord_list = get_coords(line, y++, coord_list);
+		coord_list = get_coords(line, y++, coord_list, &max_x);
 	ft_lstreverse(&coord_list);
-	while (coord_list)
-	{
-		printf("x: %d | y: %d | z: %d\n", ((t_coord *)(coord_list->content))->x, ((t_coord *)(coord_list->content))->y, ((t_coord *)(coord_list->content))->z);
-		coord_list = coord_list->next;
-	}
+	create_window(coord_list, max_x, y);
 }
 
 int		main(int argc, char **argv)
