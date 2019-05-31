@@ -17,4 +17,11 @@
 #include "libft.h"
 #include "mlx.h"
 
+typedef	struct	s_coord
+{
+	int	x;
+	int	y;
+	int	z;
+}				t_coord;
+
 #endif
