@@ -13,9 +13,9 @@
 #ifndef FDF_H
 #define FDF_H
 
-#include <fcntl.h>
-#include "libft.h"
-#include "mlx.h"
+# include <fcntl.h>
+# include "libft.h"
+# include "mlx.h"
 
 typedef	struct	s_coord
 {

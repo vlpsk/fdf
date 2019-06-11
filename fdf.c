@@ -22,17 +22,17 @@ void	create_window(int max_x, int max_y)
 	int		start_y;
 
 	mlx_ptr = mlx_init();
-	win_ptr = mlx_new_window(mlx_ptr, 800, 800, "fdf");
 	if (max_x > max_y)
 		gap = 600 / max_x;
 	else
 		gap = 600 / max_y;
+	win_ptr = mlx_new_window(mlx_ptr, 200 + max_x * gap , 200 + max_y * gap, "fdf");
 	start_x = 100;
 	start_y = 100;
-	while (start_y <= 700)
+	while (start_y <= max_y * gap + 100)
 	{
 		start_x = 100;
-		while (start_x <= 700)
+		while (start_x <= max_x * gap + 100)
 		{
 			if ((start_y - 100) % gap == 0)
 			 	mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
