@@ -12,6 +12,7 @@
 
 #include "fdf.h"
 #include <stdio.h>
+#include "math.h"
 
 void	create_window(int max_x, int max_y)
 {
@@ -20,6 +21,8 @@ void	create_window(int max_x, int max_y)
 	int		gap;
 	int	 	start_x;
 	int		start_y;
+	int		targetX;
+	int		targetY;
 
 	mlx_ptr = mlx_init();
 	if (max_x > max_y)
@@ -34,10 +37,12 @@ void	create_window(int max_x, int max_y)
 		start_x = 100;
 		while (start_x <= max_x * gap + 100)
 		{
+			targetX = start_x * cos(0.785398) - start_y * sin(0.785398);
+			targetY = start_x * sin(0.785398) + start_y * cos(0.785398);
 			if ((start_y - 100) % gap == 0)
-			 	mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
+				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, 0xFFFFFF);
 			else if ((start_x - 100) % gap == 0)
-				mlx_pixel_put(mlx_ptr, win_ptr, start_x, start_y, 0xFFFFFF);
+				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, 0xFFFFFF);
 			start_x++;
 			// printf("y:%d x:%d\n", start_y, start_x);
 		}
