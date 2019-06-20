@@ -102,27 +102,32 @@ void	ft_lstreverse(t_list **begin_list)
 	*begin_list = first;
 }
 
-t_list	*get_coords(char *line, int y, t_list *coord_list, int *max_x)
+t_list	*get_coords(int fd, int *max_x, int *y)
 {
 	int		x;
-	int		z;
 	char	**parsed;
 	t_coord	*coord;
+	t_list	*coord_list;
+	char	*line;
 
-	parsed = ft_strsplit(line, ' ');
-	x = 0;
-	coord = (t_coord *)malloc(sizeof(t_coord));
-	while (parsed[x] != 0)
+	coord_list = NULL;
+	while (get_next_line(fd, &line))
 	{
-		z = ft_atoi(parsed[x]);
-		coord->x = x;
-		coord->y = y;
-		coord->z = z;
-		if (coord_list == NULL)
-			coord_list = ft_lstnew(coord, sizeof(coord));
-		else
-			ft_lstadd(&coord_list, ft_lstnew(coord, sizeof(coord)));
-		x++;
+		x = 0;
+		parsed = ft_strsplit(line, ' ');
+		while (parsed[x] != 0)
+		{
+			coord = (t_coord *)malloc(sizeof(t_coord));
+			coord->x = x;
+			coord->y = *y;
+			coord->z = ft_atoi(parsed[x]);
+			if (coord_list == NULL)
+				coord_list = ft_lstnew(coord, sizeof(t_coord));
+			else
+				ft_lstadd(&coord_list, ft_lstnew(coord, sizeof(t_coord)));
+			x++;
+		}
+		*y = *y + 1;
 	}
 	*max_x = x;
 	return (coord_list);
@@ -131,7 +136,6 @@ t_list	*get_coords(char *line, int y, t_list *coord_list, int *max_x)
 void	read_map(char *filename)
 {
 	int		fd;
-	char	*line;
 	int		y;
 	int		max_x;
 	t_list	*coord_list;
@@ -142,8 +146,7 @@ void	read_map(char *filename)
 	y = 0;
 	coord_list = NULL;
 	max_x = 0;
-	while (get_next_line(fd, &line))
-		coord_list = get_coords(line, y++, coord_list, &max_x);
+	coord_list = get_coords(fd, &max_x, &y);
 	ft_lstreverse(&coord_list);
 	while (coord_list)
 	{
