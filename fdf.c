@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include "math.h"
 
-void	create_window(int max_x, int max_y)
+void	create_window(int max_x, int max_y/*, t_list *coord_list*/)
 {
 	void	*mlx_ptr;
 	void	*win_ptr;
@@ -23,6 +23,10 @@ void	create_window(int max_x, int max_y)
 	int		start_y;
 	int		targetX;
 	int		targetY;
+	int 	midX;
+	int 	midY;
+	/*t_coord	*coord;
+	int 	myZ;*/
 
 	mlx_ptr = mlx_init();
 	if (max_x > max_y)
@@ -32,17 +36,35 @@ void	create_window(int max_x, int max_y)
 	win_ptr = mlx_new_window(mlx_ptr, 200 + max_x * gap , 200 + max_y * gap, "fdf");
 	start_x = 100;
 	start_y = 100;
+	midX = max_x / 2;
+	midY = max_y / 2;
+	/*coord = (t_coord *)coord_list->content;
+	myZ = (int)coord->z;*/
 	while (start_y <= max_y * gap + 100)
 	{
 		start_x = 100;
 		while (start_x <= max_x * gap + 100)
 		{
-			targetX = start_x * cos(0.785398) - start_y * sin(0.785398);
-			targetY = start_x * sin(0.785398) + start_y * cos(0.785398);
+			// Rotation on 26.57 grades
+			//targetX = start_x * cos(0.46373398) - start_y * sin(0.46373398) + midX * gap;
+			//targetY = start_x * sin(0.46373398) + start_y * cos(0.46373398) - midY * gap;
+
+			targetX = (start_x - start_y) * cos(0.46373398) + midX * gap;
+			targetY = -(0) + (start_x + start_y) * sin(0.46373398);
+
 			if ((start_y - 100) % gap == 0)
 				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, 0xFFFFFF);
 			else if ((start_x - 100) % gap == 0)
+			{
 				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, 0xFFFFFF);
+				/*coord_list = coord_list->next;
+				if (coord_list)
+				{
+					coord = (t_coord *)coord_list->content;
+					myZ = (int)coord->z;
+					printf("%d\n", myZ);
+				}*/
+			}
 			start_x++;
 			// printf("y:%d x:%d\n", start_y, start_x);
 		}
@@ -123,7 +145,12 @@ void	read_map(char *filename)
 	while (get_next_line(fd, &line))
 		coord_list = get_coords(line, y++, coord_list, &max_x);
 	ft_lstreverse(&coord_list);
-	create_window(max_x, y);
+	while (coord_list)
+	{
+		printf("x: %d, y: %d, z: %d\n", ((t_coord *)coord_list->content)->x, ((t_coord *)coord_list->content)->y, ((t_coord *)coord_list->content)->z);
+		coord_list = coord_list->next;
+	}
+	//create_window(max_x, y/*, coord_list*/);
 }
 
 int		main(int argc, char **argv)
