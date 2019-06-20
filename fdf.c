@@ -40,6 +40,7 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 	int 	myZ;
 
 	mlx_ptr = mlx_init();
+	printf("max_x: %d\n", max_x);
 	if (max_x > max_y)
 		gap = 600 / max_x;
 	else
@@ -62,9 +63,11 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 
 			targetX = (start_x - start_y) * cos(0.46373398) + midX * gap;
 			targetY = -(myZ * 5) + (start_x + start_y) * sin(0.46373398);
-			if ((start_y - 100) % gap == 0)
+			//targetX = start_x;
+			//targetY = start_y;
+			if ((start_x - 100) % gap == 0)
 				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, get_color(myZ));
-			else if ((start_x - 100) % gap == 0)
+			else if ((start_y - 100) % gap == 0) 
 				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, get_color(myZ));
 			if ((start_y - 100) % gap == 0 && (start_x - 100) % gap == 0)
 			{
@@ -80,6 +83,7 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 			}
 			start_x++;
 			// printf("y:%d x:%d\n", start_y, start_x);
+
 		}
 		start_y++;
 	}
@@ -142,7 +146,8 @@ t_list	*get_coords(int fd, int *max_x, int *y)
 		}
 		*y = *y + 1;
 	}
-	*max_x = x;
+	*max_x = x - 1;
+	*y = *y - 1;
 	return (coord_list);
 }
 
