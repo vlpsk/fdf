@@ -14,6 +14,52 @@
 #include <stdio.h>
 #include "math.h"
 
+void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
+{
+	int	error;
+	int	diry;
+	int dirx;
+	int	x;
+	int	y;
+
+	printf("x0: %d, y0: %d, x1: %d, y1: %d\n", x0, y0, x1, y1);
+	diry = y1 - y0;
+	if (diry > 0)
+		diry = 1;
+	else if (diry < 0)
+		diry = -1;
+	dirx = x0 < x1 ? 1 : -1;
+	x = x0;
+	y = y0;
+	error = abs(x1 - x0) - abs(y1 - y0);
+	/*while (x <= x1)
+	{
+		mlx_pixel_put(mlx_ptr, win_ptr, x, y, 0xF44259);
+		error = error + abs(x1 - x0) / abs(y1 - y0);
+		if (2 * error >= abs(x1 - x0))
+		{
+			y = y + diry;
+			error = error - abs(x1 - x0);
+		}
+		x++;
+	}*/
+	while (x != x1  || y != y1)
+	{
+		mlx_pixel_put(mlx_ptr, win_ptr, x, y, 0xF44259);
+		if (2 * error > -1 * abs(y1 - y0))
+		{
+			error -= abs(y1 - y0);
+			x += dirx;
+		}
+		if (2 * error < abs(x1 - x0))
+		{
+			error += abs(x1 - x0);
+			y += diry;
+		}
+	}
+
+}
+
 int		get_color(int z)
 {
 	int color;
@@ -23,6 +69,12 @@ int		get_color(int z)
 	else
 		color = 0xFFFFFF;
 	return (color);
+}
+
+void	iso_projection(int *x, int *y, int z, int center)
+{
+	*x = (*x - *y) * cos(0.46373398) + center;
+	*y = -(z * 5) + (*x + *y) * sin(0.46373398);
 }
 
 void	create_window(int max_x, int max_y, t_list *coord_list)
@@ -77,7 +129,11 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 					if (coord_list)
 					{
 						coord = (t_coord *)coord_list->content;
-						myZ = (int)coord->z;					
+						if (myZ != (int)coord->z)
+						{
+							myZ = (int)coord->z;
+							//line_bresen(targetX, targetY, coord->x * gap, coord->y * gap, mlx_ptr, win_ptr);
+						}
 					}
 				}
 			}
@@ -86,6 +142,51 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 
 		}
 		start_y++;
+	}
+	mlx_loop(mlx_ptr);
+}
+
+void	draw_bresen_lines(int max_x, int max_y, t_list *coord_list)
+{
+	void	*mlx_ptr;
+	void	*win_ptr;
+	int		gap;
+	int	 	start_x;
+	int		start_y;
+	int 	midX;
+	int 	midY;
+	t_coord	*coord;
+	int 	z;
+	int 	x1;
+	int 	y1;
+
+	mlx_ptr = mlx_init();
+	printf("max_x: %d\n", max_x);
+	if (max_x > max_y)
+		gap = 600 / max_x;
+	else
+		gap = 600 / max_y;
+	win_ptr = mlx_new_window(mlx_ptr, 200 + max_x * gap , 200 + max_y * gap, "fdf");
+	start_x = 100;
+	start_y = 100;
+	midX = max_x / 2;
+	midY = max_y / 2;
+	while (coord_list)
+	{
+		coord = (t_coord *)coord_list->content;
+		start_x = 100 + coord->x * gap;
+		start_y = 100 + coord->y * gap;
+		z = (int)coord->z;
+		coord_list = coord_list->next;
+		if (coord_list)
+		{
+			coord = (t_coord *)coord_list->content;
+			x1 = 100 + coord->x * gap;
+			y1 = 100 + coord->y * gap;
+			iso_projection(&start_x, &start_y, z, midX * gap);
+			iso_projection(&x1, &y1, coord->z, midX * gap);
+			line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
+		}
 	}
 	mlx_loop(mlx_ptr);
 }
@@ -166,7 +267,8 @@ void	read_map(char *filename)
 	max_x = 0;
 	coord_list = get_coords(fd, &max_x, &y);
 	ft_lstreverse(&coord_list);
-	create_window(max_x, y, coord_list);
+	//create_window(max_x, y, coord_list);
+	draw_bresen_lines(max_x, y, coord_list);
 }
 
 int		main(int argc, char **argv)
