@@ -22,12 +22,13 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
 	int	x;
 	int	y;
 
-	//printf("x0: %d, y0: %d, x1: %d, y1: %d\n", x0, y0, x1, y1);
+	printf("x0: %d, y0: %d, x1: %d, y1: %d\n", x0, y0, x1, y1);
 	diry = y1 - y0;
 	if (diry > 0)
 		diry = 1;
 	else if (diry < 0)
 		diry = -1;
+	printf("diry: %d\n", diry);
 	dirx = x0 < x1 ? 1 : -1;
 	x = x0;
 	y = y0;
@@ -45,6 +46,7 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
 			error += abs(x1 - x0);
 			y += diry;
 		}
+		printf("x: %d, y %d\n", x, y);
 	}
 }
 
@@ -204,21 +206,28 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	midX = max_x / 2;
 	midY = max_y / 2;
 	i = 0;
-	j = 0;
 	while (i < max_y)
 	{
+		j = 0;
 		while (j < max_x)
 		{
-			start_x = 100 + coord_array[i][j]->x;
-			start_y = 100 + coord_array[i][j]->y;
+			start_x = 100 + coord_array[i][j]->x * gap;
+			start_y = 100 + coord_array[i][j]->y * gap;
 			z = coord_array[i][j]->z;
+			iso_projection(&start_x, &start_y, z, midX * gap);
 			printf("%d\n", i);
 			if (j < max_x - 1)
 			{
-				x1 = 100 + coord_array[i][j + 1]->x;
-				y1 = 100 + coord_array[i][j + 1]->y;
-				iso_projection(&start_x, &start_y, z, midX * gap);
+				x1 = 100 + coord_array[i][j + 1]->x * gap;
+				y1 = 100 + coord_array[i][j + 1]->y * gap;
 				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);
+				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
+			}
+			if (i < max_y - 1)
+			{
+				x1 = 100 + coord_array[i + 1][j]->x * gap;
+				y1 = 100 + coord_array[i + 1][j]->y * gap;
+				iso_projection(&x1, &y1, coord_array[i + 1][j]->z, midX * gap);
 				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
 			}
 			j++;
@@ -311,6 +320,7 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 			}
 			j++;
 		}
+		coord_array[i] = coords;
 		i++;
 	}
 	return (coord_array);
