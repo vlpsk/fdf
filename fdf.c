@@ -22,31 +22,29 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
 	int	x;
 	int	y;
 
-	printf("x0: %d, y0: %d, x1: %d, y1: %d\n", x0, y0, x1, y1);
 	diry = y1 - y0;
 	if (diry > 0)
 		diry = 1;
 	else if (diry < 0)
 		diry = -1;
-	printf("diry: %d\n", diry);
 	dirx = x0 < x1 ? 1 : -1;
 	x = x0;
 	y = y0;
 	error = abs(x1 - x0) - abs(y1 - y0);
-	while (x != x1  || y != y1)
+	mlx_pixel_put(mlx_ptr, win_ptr, x1, y1, 0xF44259);
+	while (x != x1 || y != y1)
 	{
 		mlx_pixel_put(mlx_ptr, win_ptr, x, y, 0xF44259);
-		if (2 * error > -1 * abs(y1 - y0))
+		if (2 * error > -1 * abs(y1 - y0) && x != x1)
 		{
 			error -= abs(y1 - y0);
 			x += dirx;
 		}
-		if (2 * error < abs(x1 - x0))
+		if (2 * error < abs(x1 - x0) && y != y1)
 		{
 			error += abs(x1 - x0);
 			y += diry;
 		}
-		printf("x: %d, y %d\n", x, y);
 	}
 }
 
