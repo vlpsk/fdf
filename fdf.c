@@ -22,7 +22,7 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
 	int	x;
 	int	y;
 
-	printf("x0: %d, y0: %d, x1: %d, y1: %d\n", x0, y0, x1, y1);
+	//printf("x0: %d, y0: %d, x1: %d, y1: %d\n", x0, y0, x1, y1);
 	diry = y1 - y0;
 	if (diry > 0)
 		diry = 1;
@@ -32,17 +32,6 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
 	x = x0;
 	y = y0;
 	error = abs(x1 - x0) - abs(y1 - y0);
-	/*while (x <= x1)
-	{
-		mlx_pixel_put(mlx_ptr, win_ptr, x, y, 0xF44259);
-		error = error + abs(x1 - x0) / abs(y1 - y0);
-		if (2 * error >= abs(x1 - x0))
-		{
-			y = y + diry;
-			error = error - abs(x1 - x0);
-		}
-		x++;
-	}*/
 	while (x != x1  || y != y1)
 	{
 		mlx_pixel_put(mlx_ptr, win_ptr, x, y, 0xF44259);
@@ -57,7 +46,6 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr)
 			y += diry;
 		}
 	}
-
 }
 
 int		get_color(int z)
@@ -109,14 +97,8 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 		start_x = 100;
 		while (start_x <= max_x * gap + 100)
 		{
-			// Rotation on 26.57 grades
-			//targetX = start_x * cos(0.46373398) - start_y * sin(0.46373398) + midX * gap;
-			//targetY = start_x * sin(0.46373398) + start_y * cos(0.46373398) - midY * gap;
-
 			targetX = (start_x - start_y) * cos(0.46373398) + midX * gap;
 			targetY = -(myZ * 5) + (start_x + start_y) * sin(0.46373398);
-			//targetX = start_x;
-			//targetY = start_y;
 			if ((start_x - 100) % gap == 0)
 				mlx_pixel_put(mlx_ptr, win_ptr, targetX, targetY, get_color(myZ));
 			else if ((start_y - 100) % gap == 0) 
@@ -159,6 +141,8 @@ void	draw_bresen_lines(int max_x, int max_y, t_list *coord_list)
 	int 	z;
 	int 	x1;
 	int 	y1;
+	int		i;
+	int		j;
 
 	mlx_ptr = mlx_init();
 	printf("max_x: %d\n", max_x);
@@ -171,6 +155,8 @@ void	draw_bresen_lines(int max_x, int max_y, t_list *coord_list)
 	start_y = 100;
 	midX = max_x / 2;
 	midY = max_y / 2;
+	i = 0;
+	j = 0;
 	while (coord_list)
 	{
 		coord = (t_coord *)coord_list->content;
@@ -187,6 +173,57 @@ void	draw_bresen_lines(int max_x, int max_y, t_list *coord_list)
 			iso_projection(&x1, &y1, coord->z, midX * gap);
 			line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
 		}
+	}
+	mlx_loop(mlx_ptr);
+}
+
+void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
+{
+	void	*mlx_ptr;
+	void	*win_ptr;
+	int		gap;
+	int	 	start_x;
+	int		start_y;
+	int 	midX;
+	int 	midY;
+	int 	z;
+	int 	x1;
+	int 	y1;
+	int		i;
+	int		j;
+
+	mlx_ptr = mlx_init();
+	printf("max_x: %d\n", max_x);
+	if (max_x > max_y)
+		gap = 600 / max_x;
+	else
+		gap = 600 / max_y;
+	win_ptr = mlx_new_window(mlx_ptr, 200 + max_x * gap , 200 + max_y * gap, "fdf");
+	start_x = 100;
+	start_y = 100;
+	midX = max_x / 2;
+	midY = max_y / 2;
+	i = 0;
+	j = 0;
+	while (i < max_y)
+	{
+		while (j < max_x)
+		{
+			start_x = 100 + coord_array[i][j]->x;
+			start_y = 100 + coord_array[i][j]->y;
+			z = coord_array[i][j]->z;
+			printf("%d\n", i);
+			if (j < max_x - 1)
+			{
+				x1 = 100 + coord_array[i][j + 1]->x;
+				y1 = 100 + coord_array[i][j + 1]->y;
+				iso_projection(&start_x, &start_y, z, midX * gap);
+				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);
+				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
+			}
+			j++;
+		}
+		i++;
 	}
 	mlx_loop(mlx_ptr);
 }
@@ -252,23 +289,53 @@ t_list	*get_coords(int fd, int *max_x, int *y)
 	return (coord_list);
 }
 
+t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
+{
+	t_coord	***coord_array;
+	t_coord	**coords;
+	int		i;
+	int		j;
+
+	i = 0;
+	coord_array = (t_coord ***)malloc(sizeof(t_coord **) * (max_y + 1));
+	while (i < max_y)
+	{
+		j = 0;
+		coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1));
+		while (j < max_x)
+		{
+			if (coord_list)
+			{
+				coords[j] = (t_coord *)coord_list->content;
+				coord_list = coord_list->next;
+			}
+			j++;
+		}
+		i++;
+	}
+	return (coord_array);
+}
+
 void	read_map(char *filename)
 {
 	int		fd;
-	int		y;
+	int		max_y;
 	int		max_x;
 	t_list	*coord_list;
+	t_coord	***coord_array;
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
 		return ;
-	y = 0;
+	max_y = 0;
 	coord_list = NULL;
 	max_x = 0;
-	coord_list = get_coords(fd, &max_x, &y);
+	coord_list = get_coords(fd, &max_x, &max_y);
+	coord_array = convert_to_array(coord_list, max_x, max_y);
 	ft_lstreverse(&coord_list);
 	//create_window(max_x, y, coord_list);
-	draw_bresen_lines(max_x, y, coord_list);
+	//draw_bresen_lines(max_x, max_y, coord_list);
+	draw_bresen_lines_array(max_x, max_y, coord_array);
 }
 
 int		main(int argc, char **argv)
