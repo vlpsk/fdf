@@ -204,16 +204,16 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	midX = max_x / 2;
 	midY = max_y / 2;
 	i = 0;
-	while (i < max_y)
+	while (i <= max_y)
 	{
 		j = 0;
-		while (j < max_x)
+		while (j <= max_x)
 		{
 			start_x = 100 + coord_array[i][j]->x * gap;
 			start_y = 100 + coord_array[i][j]->y * gap;
 			z = coord_array[i][j]->z;
 			iso_projection(&start_x, &start_y, z, midX * gap);
-			if (j < max_x - 1)
+			if (j <= max_x - 1)
 			{
 				x1 = 100 + coord_array[i][j + 1]->x * gap;
 				y1 = 100 + coord_array[i][j + 1]->y * gap;
@@ -221,7 +221,7 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);
 				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr, z);
 			}
-			if (i < max_y - 1)
+			if (i <= max_y - 1)
 			{
 				x1 = 100 + coord_array[i + 1][j]->x * gap;
 				y1 = 100 + coord_array[i + 1][j]->y * gap;
