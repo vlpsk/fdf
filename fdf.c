@@ -212,20 +212,21 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 			start_x = 100 + coord_array[i][j]->x * gap;
 			start_y = 100 + coord_array[i][j]->y * gap;
 			z = coord_array[i][j]->z;
-			iso_projection(&start_x, &start_y, z, midX * gap);
-			printf("%d\n", i);
+			z = 0;
+			iso_projection(&start_x, &start_y, /*z*/0, midX * gap);
 			if (j < max_x - 1)
 			{
 				x1 = 100 + coord_array[i][j + 1]->x * gap;
 				y1 = 100 + coord_array[i][j + 1]->y * gap;
-				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);
+				printf("x0 : %d, y0: %d, x1: %d, x2: %d\n", start_x, start_y, x1, y1);
+				iso_projection(&x1, &y1, /*coord_array[i][j + 1]->z*/0, midX * gap);
 				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
 			}
 			if (i < max_y - 1)
 			{
 				x1 = 100 + coord_array[i + 1][j]->x * gap;
 				y1 = 100 + coord_array[i + 1][j]->y * gap;
-				iso_projection(&x1, &y1, coord_array[i + 1][j]->z, midX * gap);
+				iso_projection(&x1, &y1, /*coord_array[i + 1][j]->z*/0, midX * gap);
 				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr);
 			}
 			j++;
@@ -304,12 +305,13 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 	int		j;
 
 	i = 0;
+	printf("max_x: %d, max_y: %d\n", max_x, max_y);
 	coord_array = (t_coord ***)malloc(sizeof(t_coord **) * (max_y + 1));
-	while (i < max_y)
+	while (i <= max_y)
 	{
 		j = 0;
 		coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1));
-		while (j < max_x)
+		while (j <= max_x)
 		{
 			if (coord_list)
 			{
@@ -339,8 +341,8 @@ void	read_map(char *filename)
 	coord_list = NULL;
 	max_x = 0;
 	coord_list = get_coords(fd, &max_x, &max_y);
-	coord_array = convert_to_array(coord_list, max_x, max_y);
 	ft_lstreverse(&coord_list);
+	coord_array = convert_to_array(coord_list, max_x, max_y);
 	//create_window(max_x, y, coord_list);
 	//draw_bresen_lines(max_x, max_y, coord_list);
 	draw_bresen_lines_array(max_x, max_y, coord_array);
