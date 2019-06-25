@@ -216,15 +216,17 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 	mlx_loop(mlx_ptr);
 }*/
 
-t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX)
+t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, int midY)
 {
 	t_coord	coord;
 	int		x;
 	int		y;
 	int		z;
 
-	x = 100 + old_coord->x * gap;
-	y = 100 + old_coord->y * gap;
+	//x = OFFSET + midX * gap + old_coord->x * gap;
+	//y = -1 * OFFSET + old_coord->y * gap;
+	x = OFFSET + (old_coord->x - midX) * gap;
+	y = OFFSET + (old_coord->y - midY) * gap;
 	z = old_coord->z;
 	iso_projection(&x, &y, z, midX * gap);
 	coord.x = x;
@@ -239,13 +241,8 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	void	*mlx_ptr;
 	void	*win_ptr;
 	int		gap;
-	int	 	start_x;
-	int		start_y;
 	int 	midX;
 	int 	midY;
-	/*int 	z;
-	int 	x1;
-	int 	y1;*/
 	int		i;
 	int		j;
 	t_coord	start_coord;
@@ -254,12 +251,10 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	mlx_ptr = mlx_init();
 	printf("max_x: %d\n", max_x);
 	if (max_x > max_y)
-		gap = 600 / max_x;
+		gap = (WINDOW_WIDTH - 2 * OFFSET) / max_x;
 	else
-		gap = 600 / max_y;
-	win_ptr = mlx_new_window(mlx_ptr, 200 + max_x * gap , 200 + max_y * gap, "fdf");
-	start_x = 100;
-	start_y = 100;
+		gap = (WINDOW_WIDTH - 2 * OFFSET) / max_y;
+	win_ptr = mlx_new_window(mlx_ptr, WINDOW_WIDTH , WINDOW_HEIGHT, "fdf");
 	midX = max_x / 2;
 	midY = max_y / 2;
 	i = 0;
@@ -268,30 +263,15 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 		j = 0;
 		while (j <= max_x)
 		{
-			/*start_x = 100 + coord_array[i][j]->x * gap;
-			start_y = 100 + coord_array[i][j]->y * gap;
-			z = coord_array[i][j]->z;
-			iso_projection(&start_x, &start_y, z, midX * gap);
-			start_coord.x = start_x;
-			start_coord.y = start_y;
-			start_coord.z = z;
-			start_coord.color = coord_array[i][j]->z;*/
-			start_coord = get_projected_coord(coord_array[i][j], gap, midX);
+			start_coord = get_projected_coord(coord_array[i][j], gap, midX, midY);
 			if (j <= max_x - 1)
 			{
-				/*x1 = 100 + coord_array[i][j + 1]->x * gap;
-				y1 = 100 + coord_array[i][j + 1]->y * gap;
-				printf("x0 : %d, y0: %d, x1: %d, x2: %d\n", start_x, start_y, x1, y1);
-				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);*/
-				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX);
+				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX, midY);
 				line_bresen(start_coord, end_coord, mlx_ptr, win_ptr);
 			}
 			if (i <= max_y - 1)
 			{
-				/*x1 = 100 + coord_array[i + 1][j]->x * gap;
-				y1 = 100 + coord_array[i + 1][j]->y * gap;
-				iso_projection(&x1, &y1, coord_array[i + 1][j]->z, midX * gap);*/
-				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX);
+				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX, midY);
 				line_bresen(start_coord, end_coord, mlx_ptr, win_ptr);
 			}
 			j++;
