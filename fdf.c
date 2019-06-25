@@ -101,7 +101,7 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, void *mlx_ptr, void *wi
 void	iso_projection(int *x, int *y, int z, int center)
 {
 	*x = (*x - *y) * cos(0.523599) + center;
-	*y = -(z * 5) + (*x + *y) * sin(0.523599);
+	*y = -(z) + (*x + *y) * sin(0.523599);
 }
 
 void	create_window(int max_x, int max_y, t_list *coord_list)
@@ -225,7 +225,7 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, int midY)
 
 	//x = OFFSET + midX * gap + old_coord->x * gap;
 	//y = -1 * OFFSET + old_coord->y * gap;
-	x = OFFSET + (old_coord->x - midX) * gap;
+	x = 3 * OFFSET + (old_coord->x - midX) * gap;
 	y = OFFSET + (old_coord->y - midY) * gap;
 	z = old_coord->z;
 	iso_projection(&x, &y, z, midX * gap);
@@ -251,9 +251,9 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	mlx_ptr = mlx_init();
 	printf("max_x: %d\n", max_x);
 	if (max_x > max_y)
-		gap = (WINDOW_WIDTH - 2 * OFFSET) / max_x;
+		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_x;
 	else
-		gap = (WINDOW_WIDTH - 2 * OFFSET) / max_y;
+		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_y;
 	win_ptr = mlx_new_window(mlx_ptr, WINDOW_WIDTH , WINDOW_HEIGHT, "fdf");
 	midX = max_x / 2;
 	midY = max_y / 2;
@@ -310,10 +310,21 @@ void	ft_lstreverse(t_list **begin_list)
 	*begin_list = first;
 }
 
+int		ft_len(char **array)
+{
+	int count;
+
+	count = 0;
+	while (array[count] != 0)
+		count++;
+	return (count);
+}
+
 t_list	*get_coords(int fd, int *max_x, int *y)
 {
 	int		x;
 	char	**parsed;
+	char	**split_value;
 	t_coord	*coord;
 	t_list	*coord_list;
 	char	*line;
@@ -328,8 +339,18 @@ t_list	*get_coords(int fd, int *max_x, int *y)
 			coord = (t_coord *)malloc(sizeof(t_coord));
 			coord->x = x;
 			coord->y = *y;
-			coord->z = ft_atoi(parsed[x]);
-			coord->color = get_color(ft_atoi(parsed[x]));
+			split_value = ft_strsplit(parsed[x], ',');
+			if (ft_len(split_value) == 2)
+			{
+				coord->z = ft_atoi(parsed[x]);
+				//coord->color = split_value[1];
+				coord->color = get_color(ft_atoi(parsed[x]));
+			}
+			else
+			{
+				coord->z = ft_atoi(parsed[x]);
+				coord->color = get_color(ft_atoi(parsed[x]));
+			}
 			if (coord_list == NULL)
 				coord_list = ft_lstnew(coord, sizeof(t_coord));
 			else
