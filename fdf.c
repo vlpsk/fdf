@@ -25,7 +25,42 @@ int		get_color(int z)
 	return (color);
 }
 
-void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr, int z)
+/*int		get_light(int start, int end, double percentage)
+{
+	int	light;
+
+	light = (int)((1 - percentage) * start + percentage * end);
+	return (light);
+}
+
+double	get_percent(int start, int end, int current)
+{
+	double	placement;
+	double	distance;
+
+	placement = current - start;
+	distance = end - start;
+	if (distance == 0)
+		return (1.0);
+	else
+		return (placement / distance);
+}
+
+int		get_color_for_gradient(int delta_x, int delta_y)
+{
+	double	percentage;
+	int		red;
+	int		green;
+	int		blue;
+
+	if (delta_x > delta_y)
+		percentage = get_percent(x0, x1, x);
+	else
+		percentage = get_percent(y0, y1, y);
+	red = get_color()
+}*/
+
+void	line_bresen(t_coord start_coord, t_coord end_coord, void *mlx_ptr, void *win_ptr)
 {
 	int	error;
 	int	diry;
@@ -33,27 +68,27 @@ void	line_bresen(int x0, int y0, int x1, int y1, void *mlx_ptr, void *win_ptr, i
 	int	x;
 	int	y;
 
-	diry = y1 - y0;
+	diry = end_coord.y - start_coord.y;
 	if (diry > 0)
 		diry = 1;
 	else if (diry < 0)
 		diry = -1;
-	dirx = x0 < x1 ? 1 : -1;
-	x = x0;
-	y = y0;
-	error = abs(x1 - x0) - abs(y1 - y0);
-	mlx_pixel_put(mlx_ptr, win_ptr, x1, y1, get_color(z));
-	while (x != x1 || y != y1)
+	dirx = start_coord.x < end_coord.y ? 1 : -1;
+	x = start_coord.x;
+	y = start_coord.y;
+	error = abs(end_coord.x - start_coord.x) - abs(end_coord.y - start_coord.y);
+	mlx_pixel_put(mlx_ptr, win_ptr, end_coord.x, end_coord.y, get_color(start_coord.z));
+	while (x != end_coord.x || y != end_coord.y)
 	{
-		mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_color(z));
-		if (2 * error > -1 * abs(y1 - y0) && x != x1)
+		mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_color(start_coord.z));
+		if (2 * error > -1 * abs(end_coord.y - start_coord.y) && x != start_coord.x)
 		{
-			error -= abs(y1 - y0);
+			error -= abs(end_coord.y - start_coord.y);
 			x += dirx;
 		}
-		if (2 * error < abs(x1 - x0) && y != y1)
+		if (2 * error < abs(end_coord.x - start_coord.x) && y != end_coord.y)
 		{
-			error += abs(x1 - x0);
+			error += abs(end_coord.x - start_coord.x);
 			y += diry;
 		}
 	}
@@ -177,6 +212,24 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 	mlx_loop(mlx_ptr);
 }*/
 
+t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX)
+{
+	t_coord	coord;
+	int		x;
+	int		y;
+	int		z;
+
+	x = 100 + old_coord->x * gap;
+	y = 100 + old_coord->y * gap;
+	z = old_coord->z;
+	iso_projection(&x, &y, z, midX * gap);
+	coord.x = x;
+	coord.y = y;
+	coord.z = z;
+	coord.color = old_coord->color;
+	return (coord);
+}
+
 void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 {
 	void	*mlx_ptr;
@@ -186,11 +239,13 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	int		start_y;
 	int 	midX;
 	int 	midY;
-	int 	z;
+	/*int 	z;
 	int 	x1;
-	int 	y1;
+	int 	y1;*/
 	int		i;
 	int		j;
+	t_coord	start_coord;
+	t_coord	end_coord;
 
 	mlx_ptr = mlx_init();
 	printf("max_x: %d\n", max_x);
@@ -209,24 +264,31 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 		j = 0;
 		while (j <= max_x)
 		{
-			start_x = 100 + coord_array[i][j]->x * gap;
+			/*start_x = 100 + coord_array[i][j]->x * gap;
 			start_y = 100 + coord_array[i][j]->y * gap;
 			z = coord_array[i][j]->z;
 			iso_projection(&start_x, &start_y, z, midX * gap);
+			start_coord.x = start_x;
+			start_coord.y = start_y;
+			start_coord.z = z;
+			start_coord.color = coord_array[i][j]->z;*/
+			start_coord = get_projected_coord(coord_array[i][j], gap, midX);
 			if (j <= max_x - 1)
 			{
-				x1 = 100 + coord_array[i][j + 1]->x * gap;
+				/*x1 = 100 + coord_array[i][j + 1]->x * gap;
 				y1 = 100 + coord_array[i][j + 1]->y * gap;
 				printf("x0 : %d, y0: %d, x1: %d, x2: %d\n", start_x, start_y, x1, y1);
-				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);
-				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr, z);
+				iso_projection(&x1, &y1, coord_array[i][j + 1]->z, midX * gap);*/
+				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX);
+				line_bresen(start_coord, end_coord, mlx_ptr, win_ptr);
 			}
 			if (i <= max_y - 1)
 			{
-				x1 = 100 + coord_array[i + 1][j]->x * gap;
+				/*x1 = 100 + coord_array[i + 1][j]->x * gap;
 				y1 = 100 + coord_array[i + 1][j]->y * gap;
-				iso_projection(&x1, &y1, coord_array[i + 1][j]->z, midX * gap);
-				line_bresen(start_x, start_y, x1, y1, mlx_ptr, win_ptr, z);
+				iso_projection(&x1, &y1, coord_array[i + 1][j]->z, midX * gap);*/
+				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX);
+				line_bresen(start_coord, end_coord, mlx_ptr, win_ptr);
 			}
 			j++;
 		}
@@ -283,6 +345,7 @@ t_list	*get_coords(int fd, int *max_x, int *y)
 			coord->x = x;
 			coord->y = *y;
 			coord->z = ft_atoi(parsed[x]);
+			coord->color = get_color(ft_atoi(parsed[x]));
 			if (coord_list == NULL)
 				coord_list = ft_lstnew(coord, sizeof(t_coord));
 			else
