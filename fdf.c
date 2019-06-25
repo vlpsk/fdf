@@ -25,7 +25,7 @@ int		get_color(int z)
 	return (color);
 }
 
-/*int		get_light(int start, int end, double percentage)
+int		get_light(int start, int end, double percentage)
 {
 	int	light;
 
@@ -46,19 +46,22 @@ double	get_percent(int start, int end, int current)
 		return (placement / distance);
 }
 
-int		get_color_for_gradient(int delta_x, int delta_y)
+int		get_gradient(t_coord start_coord, t_coord end_coord, int x, int y)
 {
 	double	percentage;
 	int		red;
 	int		green;
 	int		blue;
 
-	if (delta_x > delta_y)
-		percentage = get_percent(x0, x1, x);
+	if (abs(end_coord.x - start_coord.x) > abs(end_coord.y - start_coord.y))
+		percentage = get_percent(start_coord.x, end_coord.x, x);
 	else
-		percentage = get_percent(y0, y1, y);
-	red = get_color()
-}*/
+		percentage = get_percent(start_coord.y, end_coord.y, y);
+	red = get_light((start_coord.color >> 16) & 0xFF, (end_coord.color >> 16) & 0xFF, percentage);
+	green = get_light((start_coord.color >> 8) & 0xFF, (end_coord.color >> 8) & 0xFF, percentage);
+	blue = get_light(start_coord.color & 0xFF, end_coord.color & 0xFF, percentage);
+	return ((red << 16) | (green << 8) | blue);
+}
 
 void	line_bresen(t_coord start_coord, t_coord end_coord, void *mlx_ptr, void *win_ptr)
 {
@@ -68,20 +71,21 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, void *mlx_ptr, void *wi
 	int	x;
 	int	y;
 
+	//printf("x0: %d, y0: %d, x1: %d, y1: %d\n", start_coord.x, start_coord.y, end_coord.x, end_coord.y);
 	diry = end_coord.y - start_coord.y;
 	if (diry > 0)
 		diry = 1;
 	else if (diry < 0)
 		diry = -1;
-	dirx = start_coord.x < end_coord.y ? 1 : -1;
+	dirx = start_coord.x < end_coord.x ? 1 : -1;
 	x = start_coord.x;
 	y = start_coord.y;
 	error = abs(end_coord.x - start_coord.x) - abs(end_coord.y - start_coord.y);
 	mlx_pixel_put(mlx_ptr, win_ptr, end_coord.x, end_coord.y, get_color(start_coord.z));
 	while (x != end_coord.x || y != end_coord.y)
 	{
-		mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_color(start_coord.z));
-		if (2 * error > -1 * abs(end_coord.y - start_coord.y) && x != start_coord.x)
+		mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_gradient(start_coord, end_coord, x, y));
+		if (2 * error > -1 * abs(end_coord.y - start_coord.y) && x != end_coord.x)
 		{
 			error -= abs(end_coord.y - start_coord.y);
 			x += dirx;
