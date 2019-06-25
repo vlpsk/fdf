@@ -223,14 +223,12 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, int midY)
 	int		y;
 	int		z;
 
-	//x = OFFSET + midX * gap + old_coord->x * gap;
-	//y = -1 * OFFSET + old_coord->y * gap;
-	x = 3 * OFFSET + (old_coord->x - midX) * gap;
-	y = OFFSET + (old_coord->y - midY) * gap;
+	x = old_coord->x * gap;
+	y = old_coord->y * gap;
 	z = old_coord->z;
 	iso_projection(&x, &y, z, midX * gap);
-	coord.x = x;
-	coord.y = y;
+	coord.x = x + midX * gap;
+	coord.y = y + midY * gap;
 	coord.z = z;
 	coord.color = old_coord->color;
 	return (coord);
@@ -254,6 +252,7 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_x;
 	else
 		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_y;
+	printf("gap: %d\n", gap);
 	win_ptr = mlx_new_window(mlx_ptr, WINDOW_WIDTH , WINDOW_HEIGHT, "fdf");
 	midX = max_x / 2;
 	midY = max_y / 2;
