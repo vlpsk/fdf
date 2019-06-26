@@ -216,7 +216,7 @@ void	create_window(int max_x, int max_y, t_list *coord_list)
 	mlx_loop(mlx_ptr);
 }*/
 
-t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, int midY)
+t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, int offset_y)
 {
 	t_coord	coord;
 	int		x;
@@ -228,10 +228,27 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, int midY)
 	z = old_coord->z;
 	iso_projection(&x, &y, z, midX * gap);
 	coord.x = x + midX * gap;
-	coord.y = y + midY * gap;
+	coord.y = y - offset_y;
 	coord.z = z;
 	coord.color = old_coord->color;
 	return (coord);
+}
+
+int		get_offset_y(t_coord *last_coord, int center)
+{
+	int offset;
+	int projected_y;
+	int projected_x;
+
+	projected_x = last_coord->x;
+	projected_y = last_coord->y;
+	iso_projection(&projected_x, &projected_y, last_coord->z, center);
+	if (projected_y > WINDOW_HEIGHT)
+		offset = WINDOW_HEIGHT - projected_y;
+	else
+		offset = 0;
+	return (offset);
+
 }
 
 void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
@@ -245,7 +262,7 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	int		j;
 	t_coord	start_coord;
 	t_coord	end_coord;
-
+	int 	offset_y;
 	mlx_ptr = mlx_init();
 	printf("max_x: %d\n", max_x);
 	if (max_x > max_y)
@@ -256,21 +273,22 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	win_ptr = mlx_new_window(mlx_ptr, WINDOW_WIDTH , WINDOW_HEIGHT, "fdf");
 	midX = max_x / 2;
 	midY = max_y / 2;
+	offset_y = get_offset_y(coord_array[max_y][max_x], midX * gap);
 	i = 0;
 	while (i <= max_y)
 	{
 		j = 0;
 		while (j <= max_x)
 		{
-			start_coord = get_projected_coord(coord_array[i][j], gap, midX, midY);
+			start_coord = get_projected_coord(coord_array[i][j], gap, midX, offset_y);
 			if (j <= max_x - 1)
 			{
-				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX, midY);
+				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX, offset_y);
 				line_bresen(start_coord, end_coord, mlx_ptr, win_ptr);
 			}
 			if (i <= max_y - 1)
 			{
-				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX, midY);
+				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX, offset_y);
 				line_bresen(start_coord, end_coord, mlx_ptr, win_ptr);
 			}
 			j++;
@@ -319,6 +337,34 @@ int		ft_len(char **array)
 	return (count);
 }
 
+int		ft_hextoi(char *hex)
+{
+	int	i;
+	int	val;
+	int	byte;
+
+	val = 0;
+	i = 0;
+	while (hex[i])
+	{
+		if (hex[i] == '0' && hex[i + 1] == 'x')
+			i = i + 2;
+		else
+		{
+			byte = hex[i];
+			if (byte >= '0' && byte <= '9')
+				byte = byte - '0';
+			else if (byte >= 'a' && byte <= 'f')
+				byte = byte - 'a' + 10;
+			else if (byte >= 'A' && byte <= 'F')
+				byte = byte - 'A' + 10;
+			val = (val << 4) | (byte & 0xF);
+			i++;
+		}
+	}
+	return (val);
+}
+
 t_list	*get_coords(int fd, int *max_x, int *y)
 {
 	int		x;
@@ -342,8 +388,7 @@ t_list	*get_coords(int fd, int *max_x, int *y)
 			if (ft_len(split_value) == 2)
 			{
 				coord->z = ft_atoi(parsed[x]);
-				//coord->color = split_value[1];
-				coord->color = get_color(ft_atoi(parsed[x]));
+				coord->color = ft_hextoi(split_value[1]);
 			}
 			else
 			{
