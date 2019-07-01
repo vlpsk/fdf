@@ -298,6 +298,24 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	mlx_loop(mlx_ptr);
 }
 
+void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
+{
+	void	*mlx_ptr;
+	void	*image;
+	char	*addresses;
+	int		bits_per_pixel;
+	int		size_line;
+	int		endian;
+
+	mlx_ptr = mlx_init();
+	image = mlx_new_image(mlx_ptr, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
+	bits_per_pixel = 24;
+	size_line = WINDOW_WIDTH / 2;
+	endian = 0;
+	addresses = mlx_get_data_addr(image, &bits_per_pixel, &size_line, &endian);
+	
+}
+
 void	ft_lstreverse(t_list **begin_list)
 {
 	t_list *first;
