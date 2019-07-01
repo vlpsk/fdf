@@ -63,7 +63,23 @@ int		get_gradient(t_coord start_coord, t_coord end_coord, int x, int y)
 	return ((red << 16) | (green << 8) | blue);
 }
 
-void	line_bresen(t_coord start_coord, t_coord end_coord, void *mlx_ptr, void *win_ptr)
+void	pixel_put(t_fdf *fdf, int x, int y, int color)
+{
+	int i;
+
+	i = 0;
+	if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT)
+	{
+		i = (x * fdf->bits_per_pixel / 8) + (y * fdf->size_line);
+		//printf("i: %d\n", i);
+		//printf("addresses: %zu\n", ft_strlen(fdf->addresses));
+		fdf->addresses[i] = color;
+		fdf->addresses[++i] = color >> 8;
+		fdf->addresses[++i] = color >> 16;
+	}
+}
+
+void	line_bresen(t_coord start_coord, t_coord end_coord, /*void *mlx_ptr, void *win_ptr,*/ t_fdf *fdf)
 {
 	int	error;
 	int	diry;
@@ -81,10 +97,12 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, void *mlx_ptr, void *wi
 	x = start_coord.x;
 	y = start_coord.y;
 	error = abs(end_coord.x - start_coord.x) - abs(end_coord.y - start_coord.y);
-	mlx_pixel_put(mlx_ptr, win_ptr, end_coord.x, end_coord.y, get_color(start_coord.z));
+	//mlx_pixel_put(mlx_ptr, win_ptr, end_coord.x, end_coord.y, get_color(start_coord.z));
+	pixel_put(fdf, end_coord.x, end_coord.y, get_color(end_coord.z));
 	while (x != end_coord.x || y != end_coord.y)
 	{
-		mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_gradient(start_coord, end_coord, x, y));
+		//mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_gradient(start_coord, end_coord, x, y));
+		pixel_put(fdf, x, y, get_gradient(start_coord, end_coord, x, y));
 		if (2 * error > -1 * abs(end_coord.y - start_coord.y) && x != end_coord.x)
 		{
 			error -= abs(end_coord.y - start_coord.y);
@@ -251,7 +269,7 @@ int		get_offset_y(t_coord *last_coord, int center)
 
 }
 
-void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
+/*void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 {
 	void	*mlx_ptr;
 	void	*win_ptr;
@@ -263,12 +281,13 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 	t_coord	start_coord;
 	t_coord	end_coord;
 	int 	offset_y;
+
 	mlx_ptr = mlx_init();
 	printf("max_x: %d\n", max_x);
 	if (max_x > max_y)
-		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_x;
+		gap = (WINDOW_WIDTH / 2) / max_x;
 	else
-		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_y;
+		gap = (WINDOW_WIDTH / 2) / max_y;
 	printf("gap: %d\n", gap);
 	win_ptr = mlx_new_window(mlx_ptr, WINDOW_WIDTH , WINDOW_HEIGHT, "fdf");
 	midX = max_x / 2;
@@ -296,24 +315,67 @@ void	draw_bresen_lines_array(int max_x, int max_y, t_coord ***coord_array)
 		i++;
 	}
 	mlx_loop(mlx_ptr);
+}*/
+
+t_fdf	*init_fdf()
+{
+	t_fdf	*fdf;
+
+	fdf = (t_fdf *)malloc(sizeof(t_fdf));
+	fdf->mlx_ptr = mlx_init();
+	fdf->window = mlx_new_window(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT, "fdf");
+	fdf->image = mlx_new_image(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT);
+	fdf->bits_per_pixel = 24;
+	fdf->size_line = WINDOW_WIDTH;
+	fdf->endian = 0;
+	fdf->addresses = mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
+		&(fdf->endian));
+	return (fdf);
 }
 
 void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 {
-	void	*mlx_ptr;
-	void	*image;
-	char	*addresses;
-	int		bits_per_pixel;
-	int		size_line;
-	int		endian;
+	t_fdf	*fdf;
+	int 	midX;
+	int 	midY;
+	int		i;
+	int		j;
+	t_coord	start_coord;
+	t_coord	end_coord;
+	int 	offset_y;
+	int		gap;
 
-	mlx_ptr = mlx_init();
-	image = mlx_new_image(mlx_ptr, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2);
-	bits_per_pixel = 24;
-	size_line = WINDOW_WIDTH / 2;
-	endian = 0;
-	addresses = mlx_get_data_addr(image, &bits_per_pixel, &size_line, &endian);
-	
+	fdf = init_fdf();
+	if (max_x > max_y)
+		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_x;
+	else
+		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_y;
+	midX = max_x / 2;
+	midY = max_y / 2;
+	offset_y = get_offset_y(coord_array[max_y][max_x], midX * gap);
+	i = 0;
+	while (i <= max_y)
+	{
+		j = 0;
+		while (j <= max_x)
+		{
+			start_coord = get_projected_coord(coord_array[i][j], gap, midX, offset_y);
+			if (j <= max_x - 1)
+			{
+				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX, offset_y);
+				line_bresen(start_coord, end_coord, fdf);
+			}
+			if (i <= max_y - 1)
+			{
+				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX, offset_y);
+				line_bresen(start_coord, end_coord, fdf);
+			}
+			j++;
+		}
+		i++;
+	}
+	mlx_put_image_to_window(fdf->mlx_ptr, fdf->window, fdf->image, 0, 0);
+	mlx_loop(fdf->mlx_ptr);
 }
 
 void	ft_lstreverse(t_list **begin_list)
@@ -474,7 +536,8 @@ void	read_map(char *filename)
 	coord_array = convert_to_array(coord_list, max_x, max_y);
 	//create_window(max_x, y, coord_list);
 	//draw_bresen_lines(max_x, max_y, coord_list);
-	draw_bresen_lines_array(max_x, max_y, coord_array);
+	//draw_bresen_lines_array(max_x, max_y, coord_array);
+	draw_with_image(max_x, max_y, coord_array);
 }
 
 int		main(int argc, char **argv)

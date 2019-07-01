@@ -29,5 +29,16 @@ typedef	struct	s_coord
 	int	color;
 }				t_coord;
 
+typedef struct	s_fdf
+{
+	void	*mlx_ptr;
+	void	*window;
+	void	*image;
+	char	*addresses;
+	int		bits_per_pixel;
+	int		size_line;
+	int		endian;
+}				t_fdf;
+
 
 #endif
