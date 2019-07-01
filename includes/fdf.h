@@ -29,6 +29,13 @@ typedef	struct	s_coord
 	int	color;
 }				t_coord;
 
+typedef struct	s_map
+{
+	int		max_x;
+	int		max_y;
+	t_coord ***coord_array;
+}				t_map;
+
 typedef struct	s_fdf
 {
 	void	*mlx_ptr;
@@ -38,6 +45,8 @@ typedef struct	s_fdf
 	int		bits_per_pixel;
 	int		size_line;
 	int		endian;
+	int		zoom;
+	t_map	*map;
 }				t_fdf;
 
 

@@ -317,7 +317,18 @@ int		get_offset_y(t_coord *last_coord, int center)
 	mlx_loop(mlx_ptr);
 }*/
 
-t_fdf	*init_fdf()
+t_map	*init_map(int max_x, int max_y, t_coord ***coord_array)
+{
+	t_map	*map;
+
+	map = (t_map *)malloc(sizeof(t_map));
+	map->max_x = max_x;
+	map->max_y = max_y;
+	map->coord_array = coord_array;
+	return (map);
+}
+
+t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 {
 	t_fdf	*fdf;
 
@@ -330,12 +341,13 @@ t_fdf	*init_fdf()
 	fdf->endian = 0;
 	fdf->addresses = mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
 		&(fdf->endian));
+	fdf->zoom = 1;
+	fdf->map = init_map(max_x, max_y, coord_array);
 	return (fdf);
 }
 
-void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
+void	draw(t_fdf	*fdf)
 {
-	t_fdf	*fdf;
 	int 	midX;
 	int 	midY;
 	int		i;
@@ -345,29 +357,29 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 	int 	offset_y;
 	int		gap;
 
-	fdf = init_fdf();
-	if (max_x > max_y)
-		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_x;
+	mlx_clear_window(fdf->mlx_ptr, fdf->window);
+	if (fdf->map->max_x > fdf->map->max_y)
+		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / fdf->map->max_x * fdf->zoom;
 	else
-		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / max_y;
-	midX = max_x / 2;
-	midY = max_y / 2;
-	offset_y = get_offset_y(coord_array[max_y][max_x], midX * gap);
+		gap = (WINDOW_WIDTH / 2/* - 2 * OFFSET*/) / fdf->map->max_y * fdf->zoom;
+	midX = (fdf->map->max_x) / 2;
+	midY = (fdf->map->max_y) / 2;
+	offset_y = get_offset_y((fdf->map->coord_array)[fdf->map->max_y][fdf->map->max_x], midX * gap);
 	i = 0;
-	while (i <= max_y)
+	while (i <= fdf->map->max_y)
 	{
 		j = 0;
-		while (j <= max_x)
+		while (j <= fdf->map->max_x)
 		{
-			start_coord = get_projected_coord(coord_array[i][j], gap, midX, offset_y);
-			if (j <= max_x - 1)
+			start_coord = get_projected_coord((fdf->map->coord_array)[i][j], gap, midX, offset_y);
+			if (j <= fdf->map->max_x - 1)
 			{
-				end_coord = get_projected_coord(coord_array[i][j + 1], gap, midX, offset_y);
+				end_coord = get_projected_coord((fdf->map->coord_array)[i][j + 1], gap, midX, offset_y);
 				line_bresen(start_coord, end_coord, fdf);
 			}
-			if (i <= max_y - 1)
+			if (i <= fdf->map->max_y - 1)
 			{
-				end_coord = get_projected_coord(coord_array[i + 1][j], gap, midX, offset_y);
+				end_coord = get_projected_coord((fdf->map->coord_array)[i + 1][j], gap, midX, offset_y);
 				line_bresen(start_coord, end_coord, fdf);
 			}
 			j++;
@@ -375,6 +387,40 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 		i++;
 	}
 	mlx_put_image_to_window(fdf->mlx_ptr, fdf->window, fdf->image, 0, 0);
+}
+
+int		zoom(int keycode, t_fdf *fdf)
+{
+	if (keycode == 69 || keycode == 24)
+	{
+		(fdf->zoom)++;
+		printf("%s\n", "+ pressed");
+	}
+	mlx_destroy_image(fdf->mlx_ptr, fdf->image);
+	fdf->image = mlx_new_image(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT);
+	mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
+		&(fdf->endian));
+	draw(fdf);
+	return (0);
+}
+
+int		key_press(int keycode, void *param)
+{
+	t_fdf	*fdf;
+
+	fdf = (t_fdf *)param;
+	if (keycode == 69 || keycode == 24)
+		zoom(keycode, fdf);
+	return (0);
+}
+
+void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
+{
+	t_fdf	*fdf;
+	
+	fdf = init_fdf(max_x, max_y, coord_array);
+	draw(fdf);
+	mlx_key_hook(fdf->window, key_press, (void *)fdf);
 	mlx_loop(fdf->mlx_ptr);
 }
 
