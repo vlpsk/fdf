@@ -21,6 +21,14 @@
 # define WINDOW_HEIGHT 720
 # define OFFSET 200
 
+# define KEY_ESCAPE 53
+# define KEY_PLUS 69
+# define KEY_MINUS 78
+# define KEY_LEFT 123
+# define KEY_RIGHT 124
+# define KEY_DOWN 125
+# define KEY_UP 126
+
 typedef	struct	s_coord
 {
 	int		x;
@@ -42,17 +50,25 @@ typedef	struct	s_offset
 	int		offset_y;
 }				t_offset;
 
+typedef struct	s_camera
+{
+	int		move_x;
+	int		move_y;
+}				t_camera;
+
 typedef struct	s_fdf
 {
-	void	*mlx_ptr;
-	void	*window;
-	void	*image;
-	char	*addresses;
-	int		bits_per_pixel;
-	int		size_line;
-	int		endian;
-	int		zoom;
-	t_map	*map;
+	void		*mlx_ptr;
+	void		*window;
+	void		*image;
+	char		*addresses;
+	int			bits_per_pixel;
+	int			size_line;
+	int			endian;
+	int			zoom;
+	t_map		*map;
+	t_camera	camera;
+	t_offset	offset;
 }				t_fdf;
 
 

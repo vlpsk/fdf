@@ -122,7 +122,7 @@ void	iso_projection(int *x, int *y, int z, int center)
 	*y = -(z) + (*x + *y) * sin(0.523599);
 }
 
-t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_offset offset)
+t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 {
 	t_coord	coord;
 	int		x;
@@ -133,11 +133,29 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_offset offs
 	y = old_coord->y * gap;
 	z = old_coord->z;
 	iso_projection(&x, &y, z, midX * gap);
-	coord.x = x - offset.offset_x;
-	coord.y = y - offset.offset_y;
+	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
+	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
 	coord.color = old_coord->color;
 	return (coord);
+}
+
+t_camera	init_camera()
+{
+	t_camera	camera;
+
+	camera.move_x = 0;
+	camera.move_y = 0;
+	return (camera);
+}
+
+t_offset	init_offset()
+{
+	t_offset	offset;
+
+	offset.offset_x = 0;
+	offset.offset_y = 0;
+	return (offset);
 }
 
 t_map	*init_map(int max_x, int max_y, t_coord ***coord_array)
@@ -166,6 +184,8 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 		&(fdf->endian));
 	fdf->zoom = 1;
 	fdf->map = init_map(max_x, max_y, coord_array);
+	fdf->camera = init_camera();
+	fdf->offset = init_offset();
 	return (fdf);
 }
 
@@ -195,7 +215,6 @@ void	draw(t_fdf	*fdf)
 	t_coord		start_coord;
 	t_coord		end_coord;
 	int			gap;
-	t_offset	offset;
 
 	mlx_clear_window(fdf->mlx_ptr, fdf->window);
 	if (fdf->map->max_x > fdf->map->max_y)
@@ -204,22 +223,22 @@ void	draw(t_fdf	*fdf)
 		gap = (WINDOW_WIDTH / 2) / fdf->map->max_y * fdf->zoom;
 	midX = (fdf->map->max_x) / 2;
 	midY = (fdf->map->max_y) / 2;
-	offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap);
+	fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap);
 	i = 0;
 	while (i <= fdf->map->max_y)
 	{
 		j = 0;
 		while (j <= fdf->map->max_x)
 		{
-			start_coord = get_projected_coord((fdf->map->coord_array)[i][j], gap, midX, offset);
+			start_coord = get_projected_coord((fdf->map->coord_array)[i][j], gap, midX, fdf);
 			if (j <= fdf->map->max_x - 1)
 			{
-				end_coord = get_projected_coord((fdf->map->coord_array)[i][j + 1], gap, midX, offset);
+				end_coord = get_projected_coord((fdf->map->coord_array)[i][j + 1], gap, midX, fdf);
 				line_bresen(start_coord, end_coord, fdf);
 			}
 			if (i <= fdf->map->max_y - 1)
 			{
-				end_coord = get_projected_coord((fdf->map->coord_array)[i + 1][j], gap, midX, offset);
+				end_coord = get_projected_coord((fdf->map->coord_array)[i + 1][j], gap, midX, fdf);
 				line_bresen(start_coord, end_coord, fdf);
 			}
 			j++;
@@ -229,17 +248,36 @@ void	draw(t_fdf	*fdf)
 	mlx_put_image_to_window(fdf->mlx_ptr, fdf->window, fdf->image, 0, 0);
 }
 
-int		zoom(int keycode, t_fdf *fdf)
+void	redraw(t_fdf *fdf)
 {
-	if (keycode == 4 || keycode ==  69)
-		(fdf->zoom)++;
-	else if ((keycode == 5 || keycode == 78)&& (fdf->zoom) > 1)
-		(fdf->zoom)--;
 	mlx_destroy_image(fdf->mlx_ptr, fdf->image);
 	fdf->image = mlx_new_image(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT);
-	mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
+	fdf->addresses = mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
 		&(fdf->endian));
 	draw(fdf);
+}
+
+int		zoom(int keycode, t_fdf *fdf)
+{
+	if (keycode == 4 || keycode ==  KEY_PLUS)
+		(fdf->zoom)++;
+	else if ((keycode == 5 || keycode == KEY_MINUS) && (fdf->zoom) > 1)
+		(fdf->zoom)--;
+	redraw(fdf);
+	return (0);
+}
+
+int		move(int keycode, t_fdf *fdf)
+{
+	if (keycode == KEY_RIGHT)
+		(fdf->camera).move_x = (fdf->camera).move_x - 10;
+	else if (keycode == KEY_LEFT)
+		(fdf->camera).move_x = (fdf->camera).move_x + 10;
+	else if (keycode == KEY_DOWN)
+		(fdf->camera).move_y = (fdf->camera).move_y - 10;
+	else if (keycode == KEY_UP)
+		(fdf->camera).move_y = (fdf->camera).move_y + 10;
+	redraw(fdf);
 	return (0);
 }
 
@@ -248,20 +286,23 @@ int		key_press(int keycode, void *param)
 	t_fdf	*fdf;
 
 	fdf = (t_fdf *)param;
-	if (keycode == 53)
+	if (keycode == KEY_ESCAPE)
 		exit(1);
-	if (keycode == 4 || keycode == 5 || keycode ==  69 || keycode == 78)
+	if (keycode ==  KEY_PLUS || keycode == KEY_MINUS)
 		zoom(keycode, fdf);
+	else if (keycode == KEY_LEFT || keycode == KEY_RIGHT || keycode == KEY_DOWN || keycode == KEY_UP)
+		move(keycode, fdf);
 	return (0);
 }
 
 int 	mouse_press(int keycode, void *param)
 {
 	t_fdf	*fdf;
+
 	fdf = (t_fdf *)param;
 	if (keycode == 4 || keycode == 5)
 	{
-		//zoom(keycode, fdf);
+		zoom(keycode, fdf);
 		printf("%s\n", "I scrolled");
 	}
 	return (0);
@@ -274,7 +315,7 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 	fdf = init_fdf(max_x, max_y, coord_array);
 	draw(fdf);
 	mlx_key_hook(fdf->window, key_press, (void *)fdf);
-	mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
+	//mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
 	mlx_loop(fdf->mlx_ptr);
 }
 
