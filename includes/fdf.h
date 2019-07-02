@@ -21,6 +21,8 @@
 # define WINDOW_HEIGHT 720
 # define OFFSET 200
 
+# define MAIN_KEY_PLUS 24
+# define MAIN_KEY_MINUS 27
 # define KEY_ESCAPE 53
 # define KEY_PLUS 69
 # define KEY_MINUS 78
@@ -66,6 +68,7 @@ typedef struct	s_fdf
 	int			size_line;
 	int			endian;
 	int			zoom;
+	int			multiplier;
 	t_map		*map;
 	t_camera	camera;
 	t_offset	offset;

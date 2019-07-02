@@ -132,7 +132,7 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	x = old_coord->x * gap;
 	y = old_coord->y * gap;
 	z = old_coord->z;
-	iso_projection(&x, &y, z, midX * gap);
+	iso_projection(&x, &y, z * (fdf->multiplier), midX * gap);
 	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
 	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
@@ -183,13 +183,14 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 	fdf->addresses = mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
 		&(fdf->endian));
 	fdf->zoom = 1;
+	fdf->multiplier = 1;
 	fdf->map = init_map(max_x, max_y, coord_array);
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
 	return (fdf);
 }
 
-t_offset	calculate_offset(t_coord *center, int val, int gap)
+t_offset	calculate_offset(t_coord *center, int val, int gap, int multiplier)
 {
 	t_offset	offset;
 	int			x;
@@ -198,7 +199,7 @@ t_offset	calculate_offset(t_coord *center, int val, int gap)
 	x = center->x * gap;
 	y = center->y * gap;
 	printf("before projection: x: %d, y: %d\n", x, y);
-	iso_projection(&x, &y, center->z, val);
+	iso_projection(&x, &y, center->z * multiplier, val);
 	printf("after projection: x: %d, y: %d\n", x, y);
 	offset.offset_x = x - WINDOW_WIDTH / 2;
 	offset.offset_y = y - WINDOW_HEIGHT / 2;
@@ -223,7 +224,7 @@ void	draw(t_fdf	*fdf)
 		gap = (WINDOW_WIDTH / 2) / fdf->map->max_y * fdf->zoom;
 	midX = (fdf->map->max_x) / 2;
 	midY = (fdf->map->max_y) / 2;
-	fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap);
+	fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap, fdf->multiplier);
 	i = 0;
 	while (i <= fdf->map->max_y)
 	{
@@ -267,6 +268,16 @@ int		zoom(int keycode, t_fdf *fdf)
 	return (0);
 }
 
+int		enlarge(int keycode, t_fdf *fdf)
+{
+	if (keycode == MAIN_KEY_PLUS)
+		(fdf->multiplier)++;
+	else if (keycode == MAIN_KEY_MINUS && (fdf->multiplier) > 1)
+		(fdf->multiplier)--;
+	redraw(fdf);
+	return (0);
+}
+
 int		move(int keycode, t_fdf *fdf)
 {
 	if (keycode == KEY_RIGHT)
@@ -292,6 +303,8 @@ int		key_press(int keycode, void *param)
 		zoom(keycode, fdf);
 	else if (keycode == KEY_LEFT || keycode == KEY_RIGHT || keycode == KEY_DOWN || keycode == KEY_UP)
 		move(keycode, fdf);
+	else if (keycode == MAIN_KEY_PLUS || keycode == MAIN_KEY_MINUS)
+		enlarge(keycode, fdf);
 	return (0);
 }
 
