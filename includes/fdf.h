@@ -23,10 +23,10 @@
 
 typedef	struct	s_coord
 {
-	int	x;
-	int	y;
-	int	z;
-	int	color;
+	int		x;
+	int		y;
+	int		z;
+	int		color;
 }				t_coord;
 
 typedef struct	s_map
@@ -35,6 +35,12 @@ typedef struct	s_map
 	int		max_y;
 	t_coord ***coord_array;
 }				t_map;
+
+typedef	struct	s_offset
+{
+	int		offset_x;
+	int		offset_y;
+}				t_offset;
 
 typedef struct	s_fdf
 {
