@@ -239,8 +239,8 @@ void	print_menu(t_fdf *fdf)
 
 	y = 0;
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 200, y += 20, 0xFFFFFF, "How to Use");
-	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 35, 0xFFFFFF, "Zoom: NumPad +/-");
-	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Flatten: MainPad +/-");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 35, 0xFFFFFF, "Zoom: scroll");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Flatten: +/-");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Move: arrows");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Rotate:");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "X-Axis: W/S");
@@ -301,19 +301,20 @@ void	redraw(t_fdf *fdf)
 
 int		zoom(int keycode, t_fdf *fdf)
 {
-	if (keycode == 4 || keycode ==  KEY_PLUS)
+	if (keycode == 4)
 		(fdf->zoom)++;
-	else if ((keycode == 5 || keycode == KEY_MINUS) && (fdf->zoom) > 1)
+	else if ((keycode == 5) && (fdf->zoom) > 1)
 		(fdf->zoom)--;
+	ft_putnbr(fdf->zoom);
 	redraw(fdf);
 	return (0);
 }
 
 int		enlarge(int keycode, t_fdf *fdf)
 {
-	if (keycode == MAIN_KEY_PLUS)
+	if (keycode == MAIN_KEY_PLUS || keycode ==  KEY_PLUS)
 		(fdf->multiplier)++;
-	else if (keycode == MAIN_KEY_MINUS && (fdf->multiplier) > 1)
+	else if ((keycode == MAIN_KEY_MINUS || keycode == KEY_MINUS) && (fdf->multiplier) > 1)
 		(fdf->multiplier)--;
 	redraw(fdf);
 	return (0);
@@ -370,15 +371,18 @@ int		key_press(int keycode, void *param)
 	return (0);
 }
 
-int 	mouse_press(int keycode, void *param)
+int 	mouse_press(int keycode, int x, int y, void *param)
 {
 	t_fdf	*fdf;
+	t_coord	pressed;
 
+	pressed.x = x;
+	pressed.y = y;
 	fdf = (t_fdf *)param;
 	if (keycode == 4 || keycode == 5)
 	{
-		zoom(keycode, fdf);
 		printf("%s\n", "I scrolled");
+		zoom(keycode, fdf);
 	}
 	return (0);
 }
@@ -391,7 +395,8 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 	draw(fdf);
 	print_menu(fdf);
 	mlx_key_hook(fdf->window, key_press, (void *)fdf);
-	//mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
+	mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
+	//mlx_hook(fdf->window, 5, 0L, mouse_press, (void *)fdf);
 	mlx_loop(fdf->mlx_ptr);
 }
 
