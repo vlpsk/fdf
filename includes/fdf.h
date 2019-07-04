@@ -21,6 +21,12 @@
 # define WINDOW_HEIGHT 720
 # define OFFSET 200
 
+# define KEY_A 0
+# define KEY_S 1
+# define KEY_D 2
+# define KEY_Q 12
+# define KEY_W 13
+# define KEY_E 14
 # define MAIN_KEY_PLUS 24
 # define MAIN_KEY_MINUS 27
 # define KEY_ESCAPE 53
@@ -56,6 +62,9 @@ typedef struct	s_camera
 {
 	int		move_x;
 	int		move_y;
+	double	x_angle;
+	double	y_angle;
+	double	z_angle;
 }				t_camera;
 
 typedef struct	s_fdf

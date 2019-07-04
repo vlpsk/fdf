@@ -122,6 +122,19 @@ void	iso_projection(int *x, int *y, int z, int center)
 	*y = -(z) + (*x + *y) * sin(0.523599);
 }
 
+void	apply_rotation(int *x, int *y, int *z, t_camera camera)
+{
+	*x = *x;
+	*y = *y * cos(camera.x_angle) + *z * sin(camera.x_angle);
+	*z = (-1) * *y * sin(camera.x_angle) + *z * cos(camera.x_angle);
+	*x = *x * cos(camera.y_angle) + *z * sin(camera.y_angle);
+	*y = *y;
+	*z = (-1) * *x * sin(camera.y_angle) + *z * cos(camera.y_angle);
+	*x = *x * cos(camera.z_angle) - *y * sin(camera.z_angle);
+	*y = *x * sin(camera.z_angle) + *y * cos(camera.z_angle);
+	*z = *z;
+}
+
 t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 {
 	t_coord	coord;
@@ -131,8 +144,10 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 
 	x = old_coord->x * gap;
 	y = old_coord->y * gap;
-	z = old_coord->z;
-	iso_projection(&x, &y, z * (fdf->multiplier), midX * gap);
+	z = old_coord->z * fdf->multiplier;
+	apply_rotation(&x, &y, &z, fdf->camera);
+	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
+	iso_projection(&x, &y, z, midX * gap);
 	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
 	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
@@ -146,6 +161,9 @@ t_camera	init_camera()
 
 	camera.move_x = 0;
 	camera.move_y = 0;
+	camera.x_angle = 0.0;
+	camera.y_angle = 0.0;
+	camera.z_angle = 0.0;
 	return (camera);
 }
 
@@ -190,21 +208,41 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 	return (fdf);
 }
 
-t_offset	calculate_offset(t_coord *center, int val, int gap, int multiplier)
+t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 {
 	t_offset	offset;
 	int			x;
 	int			y;
+	int			z;
 
 	x = center->x * gap;
 	y = center->y * gap;
-	printf("before projection: x: %d, y: %d\n", x, y);
-	iso_projection(&x, &y, center->z * multiplier, val);
-	printf("after projection: x: %d, y: %d\n", x, y);
+	z = center->z * (fdf->multiplier);
+	//printf("before projection: x: %d, y: %d\n", x, y);
+	//printf("before rotation: x: %d, y: %d, z %d\n", x, y, z);
+	apply_rotation(&x, &y, &z, fdf->camera);
+	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
+	iso_projection(&x, &y, z, val);
+	//printf("after projection: x: %d, y: %d\n", x, y);
 	offset.offset_x = x - WINDOW_WIDTH / 2;
 	offset.offset_y = y - WINDOW_HEIGHT / 2;
 	printf("offset_x: %d, offset_y: %d\n", offset.offset_x, offset.offset_y);
 	return (offset);
+}
+
+void	print_menu(t_fdf *fdf)
+{
+	int y;
+
+	y = 0;
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 200, y += 20, 0xFFFFFF, "How to Use");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 35, 0xFFFFFF, "Zoom: NumPad +/-");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Flatten: MainPad +/-");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Move: arrows");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Rotate:");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "X-Axis: W/S");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Y-Axis: Q/E");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Z-Axis: A/D");
 }
 
 void	draw(t_fdf	*fdf)
@@ -216,15 +254,14 @@ void	draw(t_fdf	*fdf)
 	t_coord		start_coord;
 	t_coord		end_coord;
 	int			gap;
-
-	mlx_clear_window(fdf->mlx_ptr, fdf->window);
+	
 	if (fdf->map->max_x > fdf->map->max_y)
 		gap = (WINDOW_WIDTH / 2) / fdf->map->max_x * fdf->zoom;
 	else
 		gap = (WINDOW_WIDTH / 2) / fdf->map->max_y * fdf->zoom;
 	midX = (fdf->map->max_x) / 2;
 	midY = (fdf->map->max_y) / 2;
-	fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap, fdf->multiplier);
+	fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap, fdf);
 	i = 0;
 	while (i <= fdf->map->max_y)
 	{
@@ -256,6 +293,7 @@ void	redraw(t_fdf *fdf)
 	fdf->addresses = mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel), &(fdf->size_line),
 		&(fdf->endian));
 	draw(fdf);
+	print_menu(fdf);
 }
 
 int		zoom(int keycode, t_fdf *fdf)
@@ -292,6 +330,24 @@ int		move(int keycode, t_fdf *fdf)
 	return (0);
 }
 
+int 	rotate(int keycode, t_fdf *fdf)
+{
+	if (keycode == KEY_D)
+		(fdf->camera).z_angle = (fdf->camera).z_angle + 0.02;
+	else if (keycode == KEY_A)
+		(fdf->camera).z_angle = (fdf->camera).z_angle - 0.02;
+	else if (keycode == KEY_W)
+		(fdf->camera).x_angle = (fdf->camera).x_angle + 0.02;
+	else if (keycode == KEY_S)
+		(fdf->camera).x_angle = (fdf->camera).x_angle - 0.02;
+	else if (keycode == KEY_E)
+		(fdf->camera).y_angle = (fdf->camera).y_angle + 0.02;
+	else if (keycode == KEY_Q)
+		(fdf->camera).y_angle = (fdf->camera).y_angle - 0.02;
+	redraw(fdf);
+	return (0);
+}
+
 int		key_press(int keycode, void *param)
 {
 	t_fdf	*fdf;
@@ -305,6 +361,9 @@ int		key_press(int keycode, void *param)
 		move(keycode, fdf);
 	else if (keycode == MAIN_KEY_PLUS || keycode == MAIN_KEY_MINUS)
 		enlarge(keycode, fdf);
+	else if (keycode == KEY_A || keycode == KEY_S || keycode == KEY_D || keycode == KEY_W ||
+		keycode == KEY_Q || keycode == KEY_E)
+		rotate(keycode, fdf);
 	return (0);
 }
 
@@ -327,6 +386,7 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 	
 	fdf = init_fdf(max_x, max_y, coord_array);
 	draw(fdf);
+	print_menu(fdf);
 	mlx_key_hook(fdf->window, key_press, (void *)fdf);
 	//mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
 	mlx_loop(fdf->mlx_ptr);
