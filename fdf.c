@@ -68,14 +68,17 @@ void	pixel_put(t_fdf *fdf, int x, int y, int color)
 	int i;
 
 	i = 0;
-	if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT)
+	if (!(x > WINDOW_WIDTH - 300 && y < 300))
 	{
-		i = (x * fdf->bits_per_pixel / 8) + (y * fdf->size_line);
-		//printf("i: %d\n", i);
-		//printf("addresses: %zu\n", ft_strlen(fdf->addresses));
-		fdf->addresses[i] = color;
-		fdf->addresses[++i] = color >> 8;
-		fdf->addresses[++i] = color >> 16;
+		if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT)
+		{
+			i = (x * fdf->bits_per_pixel / 8) + (y * fdf->size_line);
+			//printf("i: %d\n", i);
+			//printf("addresses: %zu\n", ft_strlen(fdf->addresses));
+			fdf->addresses[i] = color;
+			fdf->addresses[++i] = color >> 8;
+			fdf->addresses[++i] = color >> 16;
+		}
 	}
 }
 
