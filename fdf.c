@@ -125,8 +125,15 @@ void	iso_projection(int *x, int *y, int z, int center)
 	*y = -(z) + (*x + *y) * sin(0.523599);
 }
 
+void	parallel_projection(int *x, int *y, int z)
+{
+	*x = *x;
+	*y = *y * cos(-0.48) + z * sin(-0.48);
+}
+
 void	apply_rotation(int *x, int *y, int *z, t_camera camera)
 {
+	printf("%f\n", camera.x_angle);
 	*x = *x;
 	*y = *y * cos(camera.x_angle) + *z * sin(camera.x_angle);
 	*z = (-1) * *y * sin(camera.x_angle) + *z * cos(camera.x_angle);
@@ -144,13 +151,16 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	int		x;
 	int		y;
 	int		z;
+	int store;
 
+	store = midX;
 	x = old_coord->x * gap;
 	y = old_coord->y * gap;
 	z = old_coord->z * fdf->multiplier;
 	apply_rotation(&x, &y, &z, fdf->camera);
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
-	iso_projection(&x, &y, z, midX * gap);
+	//iso_projection(&x, &y, z, midX * gap);
+	parallel_projection(&x, &y, z);
 	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
 	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
@@ -217,15 +227,18 @@ t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 	int			x;
 	int			y;
 	int			z;
+	int 		val2;
 
 	x = center->x * gap;
 	y = center->y * gap;
 	z = center->z * (fdf->multiplier);
+	val2 = val;
 	//printf("before projection: x: %d, y: %d\n", x, y);
 	//printf("before rotation: x: %d, y: %d, z %d\n", x, y, z);
 	apply_rotation(&x, &y, &z, fdf->camera);
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
-	iso_projection(&x, &y, z, val);
+	//iso_projection(&x, &y, z, val);
+	parallel_projection(&x, &y, z);
 	//printf("after projection: x: %d, y: %d\n", x, y);
 	offset.offset_x = x - WINDOW_WIDTH / 2;
 	offset.offset_y = y - WINDOW_HEIGHT / 2;
