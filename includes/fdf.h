@@ -29,6 +29,8 @@
 # define KEY_E 14
 # define MAIN_KEY_PLUS 24
 # define MAIN_KEY_MINUS 27
+# define KEY_I 34
+# define KEY_P 35
 # define KEY_ESCAPE 53
 # define KEY_PLUS 69
 # define KEY_MINUS 78
@@ -36,6 +38,12 @@
 # define KEY_RIGHT 124
 # define KEY_DOWN 125
 # define KEY_UP 126
+
+typedef	enum
+{
+	PARALLEL,
+	ISO
+}				t_project;
 
 typedef	struct	s_coord
 {
@@ -81,6 +89,7 @@ typedef struct	s_fdf
 	t_map		*map;
 	t_camera	camera;
 	t_offset	offset;
+	t_project	projection;
 }				t_fdf;
 
 

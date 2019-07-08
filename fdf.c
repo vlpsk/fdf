@@ -128,7 +128,7 @@ void	iso_projection(int *x, int *y, int z, int center)
 void	parallel_projection(int *x, int *y, int z)
 {
 	*x = *x;
-	*y = *y * cos(-0.48) + z * sin(-0.48);
+	*y = *y * cos(-1) + z * sin(-1);
 }
 
 void	apply_rotation(int *x, int *y, int *z, t_camera camera)
@@ -151,16 +151,16 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	int		x;
 	int		y;
 	int		z;
-	int store;
 
-	store = midX;
 	x = old_coord->x * gap;
 	y = old_coord->y * gap;
 	z = old_coord->z * fdf->multiplier;
 	apply_rotation(&x, &y, &z, fdf->camera);
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
-	//iso_projection(&x, &y, z, midX * gap);
-	parallel_projection(&x, &y, z);
+	if (fdf->projection == ISO)
+		iso_projection(&x, &y, z, midX * gap);
+	else
+		parallel_projection(&x, &y, z);
 	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
 	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
@@ -218,6 +218,7 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 	fdf->map = init_map(max_x, max_y, coord_array);
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
+	fdf->projection = PARALLEL;
 	return (fdf);
 }
 
@@ -237,8 +238,10 @@ t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 	//printf("before rotation: x: %d, y: %d, z %d\n", x, y, z);
 	apply_rotation(&x, &y, &z, fdf->camera);
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
-	//iso_projection(&x, &y, z, val);
-	parallel_projection(&x, &y, z);
+	if (fdf->projection == ISO)
+		iso_projection(&x, &y, z, val);
+	else
+		parallel_projection(&x, &y, z);
 	//printf("after projection: x: %d, y: %d\n", x, y);
 	offset.offset_x = x - WINDOW_WIDTH / 2;
 	offset.offset_y = y - WINDOW_HEIGHT / 2;
@@ -252,6 +255,9 @@ void	print_menu(t_fdf *fdf)
 
 	y = 0;
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 200, y += 20, 0xFFFFFF, "How to Use");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Projection:");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Parallel: P");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "ISO: I");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 35, 0xFFFFFF, "Zoom: scroll");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Flatten: +/-");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Move: arrows");
@@ -365,6 +371,16 @@ int 	rotate(int keycode, t_fdf *fdf)
 	return (0);
 }
 
+int		set_projection(int keycode, t_fdf *fdf)
+{
+	if (keycode == KEY_P)
+		fdf->projection = PARALLEL;
+	else
+		fdf->projection = ISO;
+	redraw(fdf);
+	return (0);
+}
+
 int		key_press(int keycode, void *param)
 {
 	t_fdf	*fdf;
@@ -372,7 +388,7 @@ int		key_press(int keycode, void *param)
 	fdf = (t_fdf *)param;
 	if (keycode == KEY_ESCAPE)
 		exit(1);
-	if (keycode ==  KEY_PLUS || keycode == KEY_MINUS)
+	if (keycode == KEY_PLUS || keycode == KEY_MINUS)
 		zoom(keycode, fdf);
 	else if (keycode == KEY_LEFT || keycode == KEY_RIGHT || keycode == KEY_DOWN || keycode == KEY_UP)
 		move(keycode, fdf);
@@ -381,6 +397,8 @@ int		key_press(int keycode, void *param)
 	else if (keycode == KEY_A || keycode == KEY_S || keycode == KEY_D || keycode == KEY_W ||
 		keycode == KEY_Q || keycode == KEY_E)
 		rotate(keycode, fdf);
+	else if (keycode == KEY_P || keycode == KEY_I)
+		set_projection(keycode, fdf);
 	return (0);
 }
 
