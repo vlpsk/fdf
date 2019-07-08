@@ -24,9 +24,12 @@
 # define KEY_A 0
 # define KEY_S 1
 # define KEY_D 2
+# define KEY_G 5
+# define KEY_B 11
 # define KEY_Q 12
 # define KEY_W 13
 # define KEY_E 14
+# define KEY_R 15
 # define MAIN_KEY_PLUS 24
 # define MAIN_KEY_MINUS 27
 # define KEY_I 34
@@ -75,6 +78,15 @@ typedef struct	s_camera
 	double	z_angle;
 }				t_camera;
 
+typedef struct	s_mouse
+{
+	int		is_pressed;
+	int		x;
+	int		y;
+	int		previous_x;
+	int		previous_y;
+}				t_mouse;
+
 typedef struct	s_fdf
 {
 	void		*mlx_ptr;
@@ -86,10 +98,12 @@ typedef struct	s_fdf
 	int			endian;
 	int			zoom;
 	int			multiplier;
+	int			base_color;
 	t_map		*map;
 	t_camera	camera;
 	t_offset	offset;
 	t_project	projection;
+	t_mouse		mouse;
 }				t_fdf;
 
 

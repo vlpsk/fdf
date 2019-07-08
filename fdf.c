@@ -214,6 +214,18 @@ t_map	*init_map(int max_x, int max_y, t_coord ***coord_array)
 	return (map);
 }
 
+t_mouse	init_mouse()
+{
+	t_mouse	mouse;
+
+	mouse.is_pressed = 0;
+	mouse.x = 0;
+	mouse.y = 0;
+	mouse.previous_x = 0;
+	mouse.previous_y = 0;
+	return (mouse);
+}
+
 t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 {
 	t_fdf	*fdf;
@@ -229,10 +241,12 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 		&(fdf->endian));
 	fdf->zoom = 1;
 	fdf->multiplier = 1;
+	fdf->base_color = 0xFFFFFF;
 	fdf->map = init_map(max_x, max_y, coord_array);
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
 	fdf->projection = PARALLEL;
+	fdf->mouse = init_mouse();
 	return (fdf);
 }
 
@@ -278,6 +292,8 @@ void	print_menu(t_fdf *fdf)
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Flatten: +/-");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Move: arrows");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30, 0xFFFFFF, "Rotate:");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Mouse Press and Drag");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 275, y += 20, 0xFFFFFF, "or:");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "X-Axis: W/S");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Y-Axis: Q/E");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Z-Axis: A/D");
@@ -372,17 +388,17 @@ int		move(int keycode, t_fdf *fdf)
 int 	rotate(int keycode, t_fdf *fdf)
 {
 	if (keycode == KEY_D)
-		(fdf->camera).z_angle = (fdf->camera).z_angle + 0.02;
+		(fdf->camera).y_angle = (fdf->camera).y_angle + 0.02;
 	else if (keycode == KEY_A)
-		(fdf->camera).z_angle = (fdf->camera).z_angle - 0.02;
+		(fdf->camera).y_angle = (fdf->camera).y_angle - 0.02;
 	else if (keycode == KEY_W)
 		(fdf->camera).x_angle = (fdf->camera).x_angle + 0.02;
 	else if (keycode == KEY_S)
 		(fdf->camera).x_angle = (fdf->camera).x_angle - 0.02;
 	else if (keycode == KEY_E)
-		(fdf->camera).y_angle = (fdf->camera).y_angle + 0.02;
+		(fdf->camera).z_angle = (fdf->camera).z_angle + 0.02;
 	else if (keycode == KEY_Q)
-		(fdf->camera).y_angle = (fdf->camera).y_angle - 0.02;
+		(fdf->camera).z_angle = (fdf->camera).z_angle - 0.02;
 	redraw(fdf);
 	return (0);
 }
@@ -400,6 +416,22 @@ int		set_projection(int keycode, t_fdf *fdf)
 		fdf->camera.x_angle = 0;
 	}
 	redraw(fdf);
+	return (0);
+}
+
+int 	change_base_color(int keycode, t_fdf *fdf)
+{
+	int		red;
+	int 	green;
+	int 	blue;
+
+	if (keycode == KEY_R)
+		red = 0xFF - 0x1;
+	else if (keycode == KEY_G)
+		green = 0xFF - 0x1;
+	else
+		blue = 0xFF - 0x1;
+	fdf->base_color = ((red << 16) | (green << 8) | blue);
 	return (0);
 }
 
@@ -421,22 +453,56 @@ int		key_press(int keycode, void *param)
 		rotate(keycode, fdf);
 	else if (keycode == KEY_P || keycode == KEY_I)
 		set_projection(keycode, fdf);
+	else if (keycode == KEY_R || keycode == KEY_G || keycode == KEY_B)
+		change_base_color(keycode, fdf);
 	return (0);
 }
 
 int 	mouse_press(int keycode, int x, int y, void *param)
 {
 	t_fdf	*fdf;
-	t_coord	pressed;
 
-	pressed.x = x;
-	pressed.y = y;
+	(void)x;
+	(void)y;
 	fdf = (t_fdf *)param;
 	if (keycode == 4 || keycode == 5)
 	{
-		printf("%s\n", "I scrolled");
 		zoom(keycode, fdf);
+		fdf->mouse.x = x;
+		fdf->mouse.y = y;
 	}
+	else if (keycode == 1 || keycode == 2)
+		fdf->mouse.is_pressed = 1;
+	return (0);
+}
+
+int		mouse_moved(int x, int y, void *param)
+{
+	t_fdf	*fdf;
+
+	fdf = (t_fdf *)param;
+	fdf->mouse.previous_x = fdf->mouse.x;
+	fdf->mouse.previous_y = fdf->mouse.y;
+	fdf->mouse.x = x;
+	fdf->mouse.y = y;
+	if (fdf->mouse.is_pressed)
+	{
+		fdf->camera.x_angle += (x - fdf->mouse.previous_x) * 0.02;
+		fdf->camera.y_angle += (y - fdf->mouse.previous_y) * 0.02;
+		redraw(fdf);
+	}
+	return (0);
+}
+
+int		mouse_released(int button, int x, int y, void *param)
+{
+	t_fdf	*fdf;
+
+	(void)button;
+	(void)x;
+	(void)y;
+	fdf = (t_fdf *)param;
+	fdf->mouse.is_pressed = 0;
 	return (0);
 }
 
@@ -448,8 +514,11 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
 	draw(fdf);
 	print_menu(fdf);
 	mlx_key_hook(fdf->window, key_press, (void *)fdf);
-	mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
+	//mlx_mouse_hook(fdf->window, mouse_press, (void *)fdf);
 	//mlx_hook(fdf->window, 5, 0L, mouse_press, (void *)fdf);
+	mlx_hook(fdf->window, 6, 0L, mouse_moved, (void *)fdf);
+	mlx_hook(fdf->window, 5, 0L, mouse_released, (void *)fdf);
+	mlx_hook(fdf->window, 4, 0L, mouse_press, (void *)fdf);
 	mlx_loop(fdf->mlx_ptr);
 }
 
@@ -618,11 +687,11 @@ void	read_map(char *filename)
 int		main(int argc, char **argv)
 {
 	if (argc != 2)
-		{
-			ft_putendl("usage: ./fdf source_file");
-			return (1);
-		}
-		else
-			read_map(argv[1]);
-		return (0);
+	{
+		ft_putendl("usage: ./fdf source_file");
+		return (1);
+	}
+	else
+		read_map(argv[1]);
+	return (0);
 }
