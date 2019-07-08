@@ -53,6 +53,7 @@ typedef	struct	s_coord
 	int		x;
 	int		y;
 	int		z;
+	int		old_z;
 	int		color;
 }				t_coord;
 

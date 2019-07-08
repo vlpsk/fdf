@@ -19,11 +19,24 @@ int		get_color(int z, t_fdf *fdf)
 	int color;
 
 	if (z > 0) 
-		color = 0xFFA951;
+		color = 0xFBA257;
+	else if (z < 0)
+		color = 0x4874BF;
 	else
 		color = fdf->base_color;
 	return (color);
 }
+
+/*int		get_color(int z, t_fdf *fdf)
+{
+	int color;
+
+	if (z > 0) 
+		color = 0xFFA951;
+	else
+		color = 0xE54B4B;
+	return (color);
+}*/
 
 int		get_light(int start, int end, double percentage)
 {
@@ -106,7 +119,10 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, /*void *mlx_ptr, void *
 	else
 		pixel_put(fdf, end_coord.x, end_coord.y, fdf->base_color);*/
 	if (fdf->color_info == 0)
-		end_coord.color = get_color(end_coord.z, fdf);
+	{
+		start_coord.color = get_color(start_coord.old_z, fdf);
+		end_coord.color = get_color(end_coord.old_z, fdf);
+	}
 	pixel_put(fdf, end_coord.x, end_coord.y, end_coord.color);
 	while (x != end_coord.x || y != end_coord.y)
 	{
@@ -189,6 +205,7 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
 	coord.color = old_coord->color;
+	coord.old_z = old_coord->old_z;
 	return (coord);
 }
 
@@ -255,7 +272,7 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	if (fdf->color_info)
 		fdf->base_color = color_info;
 	else
-		fdf->base_color = 0xE54B4B;
+		fdf->base_color = 0xF44242;
 	fdf->map = init_map(max_x, max_y, coord_array);
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
@@ -632,12 +649,14 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 			if (ft_len(split_value) == 2)
 			{
 				coord->z = ft_atoi(parsed[x]);
+				coord->old_z = coord->z;
 				coord->color = ft_hextoi(split_value[1]);
 				*color_info = 1;
 			}
 			else
 			{
 				coord->z = ft_atoi(parsed[x]);
+				coord->old_z = coord->z;
 				coord->color = /*get_color(ft_atoi(parsed[x]))*/0xFFFFFF;
 			}
 			if (coord_list == NULL)
