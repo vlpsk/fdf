@@ -14,23 +14,12 @@
 #include <stdio.h>
 #include "math.h"
 
-/*int		get_color(int z)
+int		get_color(int z, t_fdf *fdf)
 {
 	int color;
 
 	if (z > 0) 
-		color = 0xF44259;
-	else
-		color = 0xFFFFFF;
-	return (color);
-}*/
-
-int		get_color(int has_color, t_fdf *fdf)
-{
-	int color;
-
-	if (has_color != 0xFFFFFF) 
-		color = 0xF44259;
+		color = 0xFFA951;
 	else
 		color = fdf->base_color;
 	return (color);
@@ -112,14 +101,21 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, /*void *mlx_ptr, void *
 	y = start_coord.y;
 	error = abs(end_coord.x - start_coord.x) - abs(end_coord.y - start_coord.y);
 	//mlx_pixel_put(mlx_ptr, win_ptr, end_coord.x, end_coord.y, get_color(start_coord.z));
+	/*if (fdf->color_info)
+		pixel_put(fdf, end_coord.x, end_coord.y, end_coord.color);
+	else
+		pixel_put(fdf, end_coord.x, end_coord.y, fdf->base_color);*/
+	if (fdf->color_info == 0)
+		end_coord.color = get_color(end_coord.z, fdf);
 	pixel_put(fdf, end_coord.x, end_coord.y, end_coord.color);
 	while (x != end_coord.x || y != end_coord.y)
 	{
 		//mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_gradient(start_coord, end_coord, x, y));
-		if (fdf->color_info)
+		/*if (fdf->color_info)
 			pixel_put(fdf, x, y, get_gradient(start_coord, end_coord, x, y));
 		else
-			pixel_put(fdf, x, y, fdf->base_color);
+			pixel_put(fdf, x, y, fdf->base_color);*/
+		pixel_put(fdf, x, y, get_gradient(start_coord, end_coord, x, y));
 		if (2 * error > -1 * abs(end_coord.y - start_coord.y) && x != end_coord.x)
 		{
 			error -= abs(end_coord.y - start_coord.y);
@@ -259,7 +255,7 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	if (fdf->color_info)
 		fdf->base_color = color_info;
 	else
-		fdf->base_color = 0xFFFFFF;
+		fdf->base_color = 0xE54B4B;
 	fdf->map = init_map(max_x, max_y, coord_array);
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
@@ -443,15 +439,15 @@ int 	change_base_color(int keycode, t_fdf *fdf)
 	int 	green;
 	int 	blue;
 
-	blue = fdf->base_color;
-	green = fdf->base_color >> 8;
-	red = fdf->base_color >> 16;
+	red = fdf->base_color >> 16 & 0xFF;
+	green = fdf->base_color >> 8 & 0xFF;
+	blue = fdf->base_color & 0xFF;
 	printf("red: %d, green: %d, blue: %d\n", red, green, blue);
-	if (keycode == KEY_R)
-		red = red - 0x64;
-	else if (keycode == KEY_G)
+	if (keycode == KEY_R && red > 0x0)
+		red = red - 0x1;
+	else if (keycode == KEY_G && green > 0x0)
 		green = green - 0x1;
-	else
+	else if (keycode == KEY_B && blue > 0x0)
 		blue = blue - 0x1;
 	printf("AFTER red: %d, green: %d, blue: %d\n", red, green, blue);
 	fdf->base_color = ((red << 16) | (green << 8) | blue);
