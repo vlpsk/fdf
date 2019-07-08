@@ -122,28 +122,42 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, /*void *mlx_ptr, void *
 void	iso_projection(int *x, int *y, int z, int center)
 {
 	*x = (*x - *y) * cos(0.523599) + center;
-	*y = -(z) + (*x + *y) * sin(0.523599);
+	*y = -1 * z + (*x + *y) * sin(0.523599);
 }
 
 void	parallel_projection(int *x, int *y, int z)
 {
 	*x = *x;
-	*y = *y * cos(-1) + z * sin(-1);
+	*y = *y * cos(0) + z * sin(0);
 }
 
-void	apply_rotation(int *x, int *y, int *z, t_camera camera)
+void 	rotate_x(int *y, int *z, double angle)
 {
-	printf("%f\n", camera.x_angle);
-	*x = *x;
-	*y = *y * cos(camera.x_angle) + *z * sin(camera.x_angle);
-	*z = (-1) * *y * sin(camera.x_angle) + *z * cos(camera.x_angle);
-	*x = *x * cos(camera.y_angle) + *z * sin(camera.y_angle);
-	*y = *y;
-	*z = (-1) * *x * sin(camera.y_angle) + *z * cos(camera.y_angle);
-	*x = *x * cos(camera.z_angle) - *y * sin(camera.z_angle);
-	*y = *x * sin(camera.z_angle) + *y * cos(camera.z_angle);
-	*z = *z;
+	int		previous;
+
+	previous = *y;
+	*y = previous * cos(angle) + *z * sin(angle);
+	*z = (-1) * previous * sin(angle) + *z * cos(angle);
 }
+
+void	rotate_y(int *x, int *z, double angle)
+{
+	int		previous;
+
+	previous = *x;
+	*x = previous * cos(angle) + *z * sin(angle);
+	*z = -1 * previous * sin(angle) + *z * cos(angle);
+}
+
+void	rotate_z(int *x, int *y, double angle)
+{
+	int		previous;
+
+	previous = *x;
+	*x = previous * cos(angle) - *y * sin(angle);
+	*y = previous * sin(angle) + *y * cos(angle);
+}
+
 
 t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 {
@@ -155,12 +169,12 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	x = old_coord->x * gap;
 	y = old_coord->y * gap;
 	z = old_coord->z * fdf->multiplier;
-	apply_rotation(&x, &y, &z, fdf->camera);
+	rotate_x(&y, &z, fdf->camera.x_angle);
+	rotate_y(&x, &z, fdf->camera.y_angle);
+	rotate_z(&x, &y, fdf->camera.z_angle);
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
 	if (fdf->projection == ISO)
 		iso_projection(&x, &y, z, midX * gap);
-	else
-		parallel_projection(&x, &y, z);
 	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
 	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
@@ -174,7 +188,7 @@ t_camera	init_camera()
 
 	camera.move_x = 0;
 	camera.move_y = 0;
-	camera.x_angle = 0.0;
+	camera.x_angle = -1;
 	camera.y_angle = 0.0;
 	camera.z_angle = 0.0;
 	return (camera);
@@ -236,7 +250,9 @@ t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 	val2 = val;
 	//printf("before projection: x: %d, y: %d\n", x, y);
 	//printf("before rotation: x: %d, y: %d, z %d\n", x, y, z);
-	apply_rotation(&x, &y, &z, fdf->camera);
+	rotate_x(&y, &z, fdf->camera.x_angle);
+	rotate_y(&x, &z, fdf->camera.y_angle);
+	rotate_z(&x, &y, fdf->camera.z_angle);
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
 	if (fdf->projection == ISO)
 		iso_projection(&x, &y, z, val);
@@ -374,9 +390,15 @@ int 	rotate(int keycode, t_fdf *fdf)
 int		set_projection(int keycode, t_fdf *fdf)
 {
 	if (keycode == KEY_P)
+	{
 		fdf->projection = PARALLEL;
+		fdf->camera.x_angle = -1;
+	}
 	else
+	{
 		fdf->projection = ISO;
+		fdf->camera.x_angle = 0;
+	}
 	redraw(fdf);
 	return (0);
 }
