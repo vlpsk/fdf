@@ -98,6 +98,7 @@ typedef struct	s_fdf
 	int			endian;
 	int			zoom;
 	int			multiplier;
+	int			color_info;
 	int			base_color;
 	t_map		*map;
 	t_camera	camera;

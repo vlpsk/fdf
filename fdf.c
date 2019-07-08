@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include "math.h"
 
-int		get_color(int z)
+/*int		get_color(int z)
 {
 	int color;
 
@@ -22,6 +22,17 @@ int		get_color(int z)
 		color = 0xF44259;
 	else
 		color = 0xFFFFFF;
+	return (color);
+}*/
+
+int		get_color(int has_color, t_fdf *fdf)
+{
+	int color;
+
+	if (has_color != 0xFFFFFF) 
+		color = 0xF44259;
+	else
+		color = fdf->base_color;
 	return (color);
 }
 
@@ -101,11 +112,14 @@ void	line_bresen(t_coord start_coord, t_coord end_coord, /*void *mlx_ptr, void *
 	y = start_coord.y;
 	error = abs(end_coord.x - start_coord.x) - abs(end_coord.y - start_coord.y);
 	//mlx_pixel_put(mlx_ptr, win_ptr, end_coord.x, end_coord.y, get_color(start_coord.z));
-	pixel_put(fdf, end_coord.x, end_coord.y, get_color(end_coord.z));
+	pixel_put(fdf, end_coord.x, end_coord.y, end_coord.color);
 	while (x != end_coord.x || y != end_coord.y)
 	{
 		//mlx_pixel_put(mlx_ptr, win_ptr, x, y, get_gradient(start_coord, end_coord, x, y));
-		pixel_put(fdf, x, y, get_gradient(start_coord, end_coord, x, y));
+		if (fdf->color_info)
+			pixel_put(fdf, x, y, get_gradient(start_coord, end_coord, x, y));
+		else
+			pixel_put(fdf, x, y, fdf->base_color);
 		if (2 * error > -1 * abs(end_coord.y - start_coord.y) && x != end_coord.x)
 		{
 			error -= abs(end_coord.y - start_coord.y);
@@ -226,7 +240,7 @@ t_mouse	init_mouse()
 	return (mouse);
 }
 
-t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
+t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 {
 	t_fdf	*fdf;
 
@@ -241,7 +255,11 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array)
 		&(fdf->endian));
 	fdf->zoom = 1;
 	fdf->multiplier = 1;
-	fdf->base_color = 0xFFFFFF;
+	fdf->color_info = color_info;
+	if (fdf->color_info)
+		fdf->base_color = color_info;
+	else
+		fdf->base_color = 0xFFFFFF;
 	fdf->map = init_map(max_x, max_y, coord_array);
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
@@ -425,13 +443,19 @@ int 	change_base_color(int keycode, t_fdf *fdf)
 	int 	green;
 	int 	blue;
 
+	blue = fdf->base_color;
+	green = fdf->base_color >> 8;
+	red = fdf->base_color >> 16;
+	printf("red: %d, green: %d, blue: %d\n", red, green, blue);
 	if (keycode == KEY_R)
-		red = 0xFF - 0x1;
+		red = red - 0x64;
 	else if (keycode == KEY_G)
-		green = 0xFF - 0x1;
+		green = green - 0x1;
 	else
-		blue = 0xFF - 0x1;
+		blue = blue - 0x1;
+	printf("AFTER red: %d, green: %d, blue: %d\n", red, green, blue);
 	fdf->base_color = ((red << 16) | (green << 8) | blue);
+	redraw(fdf);
 	return (0);
 }
 
@@ -506,11 +530,11 @@ int		mouse_released(int button, int x, int y, void *param)
 	return (0);
 }
 
-void	draw_with_image(int max_x, int max_y, t_coord ***coord_array)
+void	draw_with_image(int max_x, int max_y, t_coord ***coord_array, int color_info)
 {
 	t_fdf	*fdf;
 	
-	fdf = init_fdf(max_x, max_y, coord_array);
+	fdf = init_fdf(max_x, max_y, coord_array, color_info);
 	draw(fdf);
 	print_menu(fdf);
 	mlx_key_hook(fdf->window, key_press, (void *)fdf);
@@ -589,7 +613,7 @@ int		ft_hextoi(char *hex)
 	return (val);
 }
 
-t_list	*get_coords(int fd, int *max_x, int *y)
+t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 {
 	int		x;
 	char	**parsed;
@@ -613,11 +637,12 @@ t_list	*get_coords(int fd, int *max_x, int *y)
 			{
 				coord->z = ft_atoi(parsed[x]);
 				coord->color = ft_hextoi(split_value[1]);
+				*color_info = 1;
 			}
 			else
 			{
 				coord->z = ft_atoi(parsed[x]);
-				coord->color = get_color(ft_atoi(parsed[x]));
+				coord->color = /*get_color(ft_atoi(parsed[x]))*/0xFFFFFF;
 			}
 			if (coord_list == NULL)
 				coord_list = ft_lstnew(coord, sizeof(t_coord));
@@ -666,6 +691,7 @@ void	read_map(char *filename)
 	int		fd;
 	int		max_y;
 	int		max_x;
+	int		color_info;
 	t_list	*coord_list;
 	t_coord	***coord_array;
 
@@ -675,13 +701,14 @@ void	read_map(char *filename)
 	max_y = 0;
 	coord_list = NULL;
 	max_x = 0;
-	coord_list = get_coords(fd, &max_x, &max_y);
+	color_info = 0;
+	coord_list = get_coords(fd, &max_x, &max_y, &color_info);
 	ft_lstreverse(&coord_list);
 	coord_array = convert_to_array(coord_list, max_x, max_y);
 	//create_window(max_x, y, coord_list);
 	//draw_bresen_lines(max_x, max_y, coord_list);
 	//draw_bresen_lines_array(max_x, max_y, coord_array);
-	draw_with_image(max_x, max_y, coord_array);
+	draw_with_image(max_x, max_y, coord_array, color_info);
 }
 
 int		main(int argc, char **argv)
