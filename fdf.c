@@ -201,8 +201,8 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
 	if (fdf->projection == ISO)
 		iso_projection(&x, &y, z, midX * gap);
-	coord.x = x - (fdf->offset).offset_x + (fdf->camera).move_x;
-	coord.y = y - (fdf->offset).offset_y + (fdf->camera).move_y;
+	coord.x = x /*+*/ - (fdf->offset).offset_x + (fdf->camera).move_x;
+	coord.y = y /*+*/ - (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
 	coord.color = old_coord->color;
 	coord.old_z = old_coord->old_z;
@@ -281,7 +281,7 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	return (fdf);
 }
 
-/*t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
+t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 {
 	t_offset	offset;
 	int			x;
@@ -306,9 +306,9 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	offset.offset_y = y - WINDOW_HEIGHT / 2;
 	printf("offset_x: %d, offset_y: %d\n", offset.offset_x, offset.offset_y);
 	return (offset);
-}*/
+}
 
-t_coord		project_offset(t_coord *first, int val, int gap, t_fdf *fdf)
+/*t_coord		project_offset(t_coord *first, int val, int gap, t_fdf *fdf)
 {
 	t_coord		start;
 	int			x;
@@ -323,11 +323,11 @@ t_coord		project_offset(t_coord *first, int val, int gap, t_fdf *fdf)
 	rotate_z(&x, &y, fdf->camera.z_angle);
 	if (fdf->projection == ISO)
 		iso_projection(&x, &y, z, val);
-	else
-		parallel_projection(&x, &y, z);
 	start.x = x;
 	start.y = y;
 	start.z = z;
+	start.old_z = z;
+	start.color = 0xFFFFFF;
 	return (start);
 }
 
@@ -339,10 +339,13 @@ t_offset	calculate_offset(t_coord *first, t_coord *last, int val, int gap, t_fdf
 
 	start = project_offset(first, val, gap, fdf);
 	end = project_offset(last, val, gap, fdf);
-	offset.offset_x = start.x + (end.x - start.x) / 2 - WINDOW_WIDTH / 2;
-	offset.offset_y = start.y + (end.y - start.y) / 2 - WINDOW_HEIGHT / 2;
+	printf("start.x: %d, end.x: %d\n", start.x, end.x);
+	offset.offset_x = WINDOW_WIDTH / 2 - (start.x + ((end.x - start.x) / 2));
+	printf("Center.x = %d, image.x = %d, offset.x = %d\n", WINDOW_WIDTH / 2, (start.x + ((end.x - start.x) / 2)), offset.offset_x);
+	offset.offset_y = WINDOW_HEIGHT / 2 - (start.y + ((end.y - start.y) / 2));
+	//offset.offset_y = 0;
 	return (offset);
-}
+}*/
 
 void	print_menu(t_fdf *fdf)
 {
@@ -386,7 +389,8 @@ void	draw(t_fdf	*fdf)
 		gap = (WINDOW_WIDTH / 2) / fdf->map->max_y * fdf->zoom;
 	midX = (fdf->map->max_x) / 2;
 	midY = (fdf->map->max_y) / 2;
-	fdf->offset = calculate_offset((fdf->map->coord_array)[0][0], (fdf->map->coord_array)[fdf->map->max_x][fdf->map->max_y], midX * gap, gap, fdf);
+	//fdf->offset = calculate_offset((fdf->map->coord_array)[0][0], (fdf->map->coord_array)[fdf->map->max_x][fdf->map->max_y], midX * gap, gap, fdf);
+	fdf->offset = calculate_offset((fdf->map->coord_array)[midX][midY], midX * gap, gap, fdf);
 	i = 0;
 	while (i <= fdf->map->max_y)
 	{
