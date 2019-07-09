@@ -653,6 +653,53 @@ int		ft_hextoi(char *hex)
 	return (val);
 }
 
+int		is_decimal(char *str)
+{
+	int i;
+
+	i = 0;
+	while (str[i] != '\0')
+	{
+		if (ft_isdigit(str[i]) == 0)
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
+int		ft_ishex(char c)
+{
+	if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
+		return (1);
+	else
+		return (0);
+}
+
+int		is_hexadecimal_color(char *str)
+{
+	int i;
+
+	i = 0;
+	if (str[0] == '0' && str[1] == 'x')
+	{
+		if (ft_strlen(str) > 8)
+			return (0);
+		i = 2;
+	}
+	else
+	{
+		if (ft_strlen(str) > 6)
+			return (0);
+	}
+	while (str[i] != '\0')
+	{
+		if (ft_ishex(str[i]) == 0)
+			return (0);
+		i++;
+	}
+	return (1);
+}
+
 t_list	*coord_iteration(char **parsed, int *x, int *y, t_list *coord_list, int *color_info)
 {
 	t_coord	*coord;
@@ -666,15 +713,30 @@ t_list	*coord_iteration(char **parsed, int *x, int *y, t_list *coord_list, int *
 		split_value = ft_strsplit(parsed[*x], ',');
 		if (ft_len(split_value) == 2)
 		{
-			coord->z = ft_atoi(parsed[*x]);
-			coord->old_z = coord->z;
-			coord->color = ft_hextoi(split_value[1]);
-			*color_info = 1;
+			if (is_decimal(split_value[0]))
+			{
+				coord->z = ft_atoi(split_value[0]);
+				coord->old_z = coord->z;
+			}
+			else
+				return (NULL);
+			if (is_hexadecimal_color(split_value[1]))
+			{
+				coord->color = ft_hextoi(split_value[1]);
+				*color_info = 1;
+			}
+			else
+				return (NULL);
 		}
 		else
 		{
-			coord->z = ft_atoi(parsed[*x]);
-			coord->old_z = coord->z;
+			if (is_decimal(parsed[*x]))
+			{
+				coord->z = ft_atoi(parsed[*x]);
+				coord->old_z = coord->z;
+			}
+			else
+				return (NULL);
 			coord->color = 0xF44242;
 		}
 		if (coord_list == NULL)
@@ -711,7 +773,11 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 			if (check_number_of_elements(parsed, x))
 			{
 				x = 0;
-				coord_list = coord_iteration(parsed, &x, y, coord_list, color_info);
+				if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
+				{
+					ft_putendl("map error");
+					exit(0);
+				}
 			}
 			else
 			{
@@ -722,7 +788,11 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 		else
 		{
 			x = 0;
-			coord_list = coord_iteration(parsed, &x, y, coord_list, color_info);
+			if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
+			{
+				ft_putendl("map error");
+				exit(0);
+			}
 		}
 		*y = *y + 1;
 	}
