@@ -201,8 +201,8 @@ t_coord	get_projected_coord(t_coord *old_coord, int gap, int midX, t_fdf *fdf)
 	//printf("after rotation: x: %d, y: %d, z %d\n", x, y, z);
 	if (fdf->projection == ISO)
 		iso_projection(&x, &y, z, midX * gap);
-	coord.x = x + /*-*/ (fdf->offset).offset_x + (fdf->camera).move_x;
-	coord.y = y + /*-*/ (fdf->offset).offset_y + (fdf->camera).move_y;
+	coord.x = x + (fdf->offset).offset_x + (fdf->camera).move_x;
+	coord.y = y + (fdf->offset).offset_y + (fdf->camera).move_y;
 	coord.z = z;
 	coord.color = old_coord->color;
 	coord.old_z = old_coord->old_z;
@@ -363,7 +363,6 @@ void	draw(t_fdf	*fdf)
 	midX = (fdf->map->max_x) / 2;
 	midY = (fdf->map->max_y) / 2;
 	fdf->offset = calculate_offset((fdf->map->coord_array)[0][0], (fdf->map->coord_array)[fdf->map->max_y][fdf->map->max_x], midX * gap, gap, fdf);
-	//fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap, fdf);
 	i = 0;
 	while (i <= fdf->map->max_y)
 	{
@@ -457,11 +456,15 @@ int		set_projection(int keycode, t_fdf *fdf)
 	{
 		fdf->projection = PARALLEL;
 		fdf->camera.x_angle = -1;
+		fdf->camera.y_angle = 0;
+		fdf->camera.z_angle = 0;
 	}
 	else
 	{
 		fdf->projection = ISO;
 		fdf->camera.x_angle = 0;
+		fdf->camera.y_angle = 0;
+		fdf->camera.z_angle = 0;
 	}
 	redraw(fdf);
 	return (0);
@@ -650,44 +653,76 @@ int		ft_hextoi(char *hex)
 	return (val);
 }
 
+t_list	*coord_iteration(char **parsed, int *x, int *y, t_list *coord_list, int *color_info)
+{
+	t_coord	*coord;
+	char	**split_value;
+
+	while (parsed[*x] != 0)
+	{
+		coord = (t_coord *)malloc(sizeof(t_coord));
+		coord->x = *x;
+		coord->y = *y;
+		split_value = ft_strsplit(parsed[*x], ',');
+		if (ft_len(split_value) == 2)
+		{
+			coord->z = ft_atoi(parsed[*x]);
+			coord->old_z = coord->z;
+			coord->color = ft_hextoi(split_value[1]);
+			*color_info = 1;
+		}
+		else
+		{
+			coord->z = ft_atoi(parsed[*x]);
+			coord->old_z = coord->z;
+			coord->color = 0xF44242;
+		}
+		if (coord_list == NULL)
+			coord_list = ft_lstnew(coord, sizeof(t_coord));
+		else
+			ft_lstadd(&coord_list, ft_lstnew(coord, sizeof(t_coord)));
+		*x = *x + 1;
+	}
+	return (coord_list);
+}
+
+int 	check_number_of_elements(char **parsed, int x)
+{
+	if (ft_len(parsed) != x)
+		return (0);
+	else
+		return (1);
+}
+
 t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 {
 	int		x;
 	char	**parsed;
-	char	**split_value;
-	t_coord	*coord;
 	t_list	*coord_list;
 	char	*line;
 
 	coord_list = NULL;
 	while (get_next_line(fd, &line))
 	{
-		x = 0;
 		parsed = ft_strsplit(line, ' ');
-		while (parsed[x] != 0)
+		if (coord_list)
 		{
-			coord = (t_coord *)malloc(sizeof(t_coord));
-			coord->x = x;
-			coord->y = *y;
-			split_value = ft_strsplit(parsed[x], ',');
-			if (ft_len(split_value) == 2)
+			printf("x: %d, array_len: %d\n", x, ft_len(parsed));
+			if (check_number_of_elements(parsed, x))
 			{
-				coord->z = ft_atoi(parsed[x]);
-				coord->old_z = coord->z;
-				coord->color = ft_hextoi(split_value[1]);
-				*color_info = 1;
+				x = 0;
+				coord_list = coord_iteration(parsed, &x, y, coord_list, color_info);
 			}
 			else
 			{
-				coord->z = ft_atoi(parsed[x]);
-				coord->old_z = coord->z;
-				coord->color = 0xF44242;
+				ft_putendl("map error");
+				exit(0);
 			}
-			if (coord_list == NULL)
-				coord_list = ft_lstnew(coord, sizeof(t_coord));
-			else
-				ft_lstadd(&coord_list, ft_lstnew(coord, sizeof(t_coord)));
-			x++;
+		}
+		else
+		{
+			x = 0;
+			coord_list = coord_iteration(parsed, &x, y, coord_list, color_info);
 		}
 		*y = *y + 1;
 	}
