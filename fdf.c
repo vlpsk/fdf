@@ -780,16 +780,24 @@ void	del_list(void *content, size_t content_size)
 	(void)content_size;
 }
 
-t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
+void	free_coord_list_and_exit(t_list *coord_list)
 {
 	void	(*f)(void *, size_t);
+
+	f = del_list;
+	ft_lstdel(&coord_list, f);
+	ft_putendl("map error");
+	exit(0);
+}
+
+t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
+{
 	int		x;
 	char	**parsed;
 	t_list	*coord_list;
 	char	*line;
 
 	coord_list = NULL;
-	f = del_list;
 	while (get_next_line(fd, &line))
 	{
 		parsed = ft_strsplit(line, ' ');
@@ -800,28 +808,16 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 			{
 				x = 0;
 				if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
-				{
-					ft_lstdel(&coord_list, f);
-					ft_putendl("map error");
-					exit(0);
-				}
+					free_coord_list_and_exit(coord_list);
 			}
 			else
-			{
-				ft_lstdel(&coord_list, f);
-				ft_putendl("map error");
-				exit(0);
-			}
+				free_coord_list_and_exit(coord_list);
 		}
 		else
 		{
 			x = 0;
 			if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
-			{
-				ft_lstdel(&coord_list, f);
-				ft_putendl("map error");
-				exit(0);
-			}
+				free_coord_list_and_exit(coord_list);
 		}
 		*y = *y + 1;
 	}
@@ -848,9 +844,8 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 		j = 0;
 		if (!(coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1))))
 		{
-			ft_lstdel(&coord_list, f);
 			free_coord_array(coord_array, i);
-			return (NULL);
+			free_coord_list_and_exit(coord_list);
 		}
 		while (j <= max_x)
 		{
