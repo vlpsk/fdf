@@ -281,18 +281,16 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	return (fdf);
 }
 
-t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
+/*t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 {
 	t_offset	offset;
 	int			x;
 	int			y;
 	int			z;
-	int 		val2;
 
 	x = center->x * gap;
 	y = center->y * gap;
 	z = center->z * (fdf->multiplier);
-	val2 = val;
 	//printf("before projection: x: %d, y: %d\n", x, y);
 	//printf("before rotation: x: %d, y: %d, z %d\n", x, y, z);
 	rotate_x(&y, &z, fdf->camera.x_angle);
@@ -307,6 +305,42 @@ t_offset	calculate_offset(t_coord *center, int val, int gap, t_fdf *fdf)
 	offset.offset_x = x - WINDOW_WIDTH / 2;
 	offset.offset_y = y - WINDOW_HEIGHT / 2;
 	printf("offset_x: %d, offset_y: %d\n", offset.offset_x, offset.offset_y);
+	return (offset);
+}*/
+
+t_coord		project_offset(t_coord *first, int val, int gap, t_fdf *fdf)
+{
+	t_coord		start;
+	int			x;
+	int			y;
+	int			z;
+
+	x = first->x * gap;
+	y = first->y * gap;
+	z = first->z * (fdf->multiplier);
+	rotate_x(&y, &z, fdf->camera.x_angle);
+	rotate_y(&x, &z, fdf->camera.y_angle);
+	rotate_z(&x, &y, fdf->camera.z_angle);
+	if (fdf->projection == ISO)
+		iso_projection(&x, &y, z, val);
+	else
+		parallel_projection(&x, &y, z);
+	start.x = x;
+	start.y = y;
+	start.z = z;
+	return (start);
+}
+
+t_offset	calculate_offset(t_coord *first, t_coord *last, int val, int gap, t_fdf *fdf)
+{
+	t_offset	offset;
+	t_coord		start;
+	t_coord		end;
+
+	start = project_offset(first, val, gap, fdf);
+	end = project_offset(last, val, gap, fdf);
+	offset.offset_x = start.x + (end.x - start.x) / 2 - WINDOW_WIDTH / 2;
+	offset.offset_y = start.y + (end.y - start.y) / 2 - WINDOW_HEIGHT / 2;
 	return (offset);
 }
 
@@ -328,6 +362,12 @@ void	print_menu(t_fdf *fdf)
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "X-Axis: W/S");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Y-Axis: Q/E");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20, 0xFFFFFF, "Z-Axis: A/D");
+	y = WINDOW_HEIGHT - 200;
+	mlx_string_put(fdf->mlx_ptr, fdf->window, 25, y, 0xFFFFFF, "Change color");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, 25, y += 30, 0xFFFFFF, "decrement/increment");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, 50, y += 20, 0xFFFFFF, "Red: R/T");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, 50, y += 20, 0xFFFFFF, "Green: G/H");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, 50, y += 20, 0xFFFFFF, "Blue: B/N");
 }
 
 void	draw(t_fdf	*fdf)
@@ -346,7 +386,7 @@ void	draw(t_fdf	*fdf)
 		gap = (WINDOW_WIDTH / 2) / fdf->map->max_y * fdf->zoom;
 	midX = (fdf->map->max_x) / 2;
 	midY = (fdf->map->max_y) / 2;
-	fdf->offset = calculate_offset((fdf->map->coord_array)[midY][midX], midX * gap, gap, fdf);
+	fdf->offset = calculate_offset((fdf->map->coord_array)[0][0], (fdf->map->coord_array)[fdf->map->max_x][fdf->map->max_y], midX * gap, gap, fdf);
 	i = 0;
 	while (i <= fdf->map->max_y)
 	{
@@ -462,10 +502,16 @@ int 	change_base_color(int keycode, t_fdf *fdf)
 	printf("red: %d, green: %d, blue: %d\n", red, green, blue);
 	if (keycode == KEY_R && red > 0x0)
 		red = red - 0x1;
+	else if (keycode == KEY_T && red < 0xFF)
+		red = red + 0x1;
 	else if (keycode == KEY_G && green > 0x0)
 		green = green - 0x1;
+	else if (keycode == KEY_H && green < 0xFF)
+		green = green + 0x1;
 	else if (keycode == KEY_B && blue > 0x0)
 		blue = blue - 0x1;
+	else if (keycode == KEY_N && blue < 0xFF)
+		blue = blue + 0x1;
 	printf("AFTER red: %d, green: %d, blue: %d\n", red, green, blue);
 	fdf->base_color = ((red << 16) | (green << 8) | blue);
 	redraw(fdf);
@@ -490,7 +536,8 @@ int		key_press(int keycode, void *param)
 		rotate(keycode, fdf);
 	else if (keycode == KEY_P || keycode == KEY_I)
 		set_projection(keycode, fdf);
-	else if (keycode == KEY_R || keycode == KEY_G || keycode == KEY_B)
+	else if (keycode == KEY_R || keycode == KEY_G || keycode == KEY_B || keycode == KEY_T ||
+		keycode == KEY_H || keycode == KEY_N)
 		change_base_color(keycode, fdf);
 	return (0);
 }
@@ -657,7 +704,7 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 			{
 				coord->z = ft_atoi(parsed[x]);
 				coord->old_z = coord->z;
-				coord->color = /*get_color(ft_atoi(parsed[x]))*/0xFFFFFF;
+				coord->color = 0xF44242;
 			}
 			if (coord_list == NULL)
 				coord_list = ft_lstnew(coord, sizeof(t_coord));

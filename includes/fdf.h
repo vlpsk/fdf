@@ -17,23 +17,26 @@
 # include "libft.h"
 # include "mlx.h"
 
-# define WINDOW_WIDTH 1280
-# define WINDOW_HEIGHT 720
+# define WINDOW_WIDTH 1366
+# define WINDOW_HEIGHT 768
 # define OFFSET 200
 
 # define KEY_A 0
 # define KEY_S 1
 # define KEY_D 2
+# define KEY_H 4
 # define KEY_G 5
 # define KEY_B 11
 # define KEY_Q 12
 # define KEY_W 13
 # define KEY_E 14
 # define KEY_R 15
+# define KEY_T 17
 # define MAIN_KEY_PLUS 24
 # define MAIN_KEY_MINUS 27
 # define KEY_I 34
 # define KEY_P 35
+# define KEY_N 45
 # define KEY_ESCAPE 53
 # define KEY_PLUS 69
 # define KEY_MINUS 78
