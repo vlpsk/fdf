@@ -27,16 +27,18 @@ int		get_color(int z, t_fdf *fdf)
 	return (color);
 }
 
-/*int		get_color(int z, t_fdf *fdf)
+void 	free_coord_array(t_coord ***coord_array, int max_y)
 {
-	int color;
+	int i;
 
-	if (z > 0) 
-		color = 0xFFA951;
-	else
-		color = 0xE54B4B;
-	return (color);
-}*/
+	i = 0;
+	while (i <= max_y)
+	{
+		free(coord_array[i]);
+		i++;
+	}
+	free(coord_array);
+}
 
 int		get_light(int start, int end, double percentage)
 {
@@ -234,7 +236,8 @@ t_map	*init_map(int max_x, int max_y, t_coord ***coord_array)
 {
 	t_map	*map;
 
-	map = (t_map *)malloc(sizeof(t_map));
+	if (!(map = (t_map *)malloc(sizeof(t_map))))
+		return (NULL);
 	map->max_x = max_x;
 	map->max_y = max_y;
 	map->coord_array = coord_array;
@@ -257,7 +260,8 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 {
 	t_fdf	*fdf;
 
-	fdf = (t_fdf *)malloc(sizeof(t_fdf));
+	if (!(fdf = (t_fdf *)malloc(sizeof(t_fdf))))
+		return (NULL);
 	fdf->mlx_ptr = mlx_init();
 	fdf->window = mlx_new_window(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT, "fdf");
 	fdf->image = mlx_new_image(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -269,11 +273,12 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	fdf->zoom = 1;
 	fdf->multiplier = 1;
 	fdf->color_info = color_info;
-	if (fdf->color_info)
-		fdf->base_color = color_info;
-	else
-		fdf->base_color = 0xF44242;
-	fdf->map = init_map(max_x, max_y, coord_array);
+	fdf->base_color = (fdf->color_info) ? 0xFFFFFF : 0xF44242;
+	if (!(fdf->map = init_map(max_x, max_y, coord_array)))
+	{
+		free(fdf);
+		return (NULL);
+	}
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
 	fdf->projection = PARALLEL;
@@ -498,13 +503,21 @@ int 	change_base_color(int keycode, t_fdf *fdf)
 	return (0);
 }
 
+void	close_program(t_fdf *fdf)
+{
+	free_coord_array(fdf->map->coord_array, fdf->map->max_y);
+	free(fdf->map);
+	free(fdf);
+	exit(0);
+}
+
 int		key_press(int keycode, void *param)
 {
 	t_fdf	*fdf;
 
 	fdf = (t_fdf *)param;
 	if (keycode == KEY_ESCAPE)
-		exit(1);
+		close_program(fdf);
 	if (keycode == KEY_PLUS || keycode == KEY_MINUS)
 		zoom(keycode, fdf);
 	else if (keycode == KEY_LEFT || keycode == KEY_RIGHT || keycode == KEY_DOWN || keycode == KEY_UP)
@@ -574,7 +587,11 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array, int color_inf
 {
 	t_fdf	*fdf;
 	
-	fdf = init_fdf(max_x, max_y, coord_array, color_info);
+	if (!(fdf = init_fdf(max_x, max_y, coord_array, color_info)))
+	{
+		free_coord_array(coord_array, max_y);
+		exit(0);
+	}
 	draw(fdf);
 	print_menu(fdf);
 	mlx_key_hook(fdf->window, key_press, (void *)fdf);
@@ -707,7 +724,8 @@ t_list	*coord_iteration(char **parsed, int *x, int *y, t_list *coord_list, int *
 
 	while (parsed[*x] != 0)
 	{
-		coord = (t_coord *)malloc(sizeof(t_coord));
+		if (!(coord = (t_coord *)malloc(sizeof(t_coord))))
+			return (NULL);
 		coord->x = *x;
 		coord->y = *y;
 		split_value = ft_strsplit(parsed[*x], ',');
@@ -756,14 +774,22 @@ int 	check_number_of_elements(char **parsed, int x)
 		return (1);
 }
 
+void	del_list(void *content, size_t content_size)
+{
+	free(content);
+	(void)content_size;
+}
+
 t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 {
+	void	(*f)(void *, size_t);
 	int		x;
 	char	**parsed;
 	t_list	*coord_list;
 	char	*line;
 
 	coord_list = NULL;
+	f = del_list;
 	while (get_next_line(fd, &line))
 	{
 		parsed = ft_strsplit(line, ' ');
@@ -775,12 +801,14 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 				x = 0;
 				if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
 				{
+					ft_lstdel(&coord_list, f);
 					ft_putendl("map error");
 					exit(0);
 				}
 			}
 			else
 			{
+				ft_lstdel(&coord_list, f);
 				ft_putendl("map error");
 				exit(0);
 			}
@@ -790,6 +818,7 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 			x = 0;
 			if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
 			{
+				ft_lstdel(&coord_list, f);
 				ft_putendl("map error");
 				exit(0);
 			}
@@ -803,18 +832,26 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 
 t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 {
+	void	(*f)(void *, size_t);
 	t_coord	***coord_array;
 	t_coord	**coords;
 	int		i;
 	int		j;
 
 	i = 0;
+	f = del_list;
 	printf("max_x: %d, max_y: %d\n", max_x, max_y);
-	coord_array = (t_coord ***)malloc(sizeof(t_coord **) * (max_y + 1));
+	if (!(coord_array = (t_coord ***)malloc(sizeof(t_coord **) * (max_y + 1))))
+		return (NULL);
 	while (i <= max_y)
 	{
 		j = 0;
-		coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1));
+		if (!(coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1))))
+		{
+			ft_lstdel(&coord_list, f);
+			free_coord_array(coord_array, i);
+			return (NULL);
+		}
 		while (j <= max_x)
 		{
 			if (coord_list)
@@ -827,6 +864,7 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 		coord_array[i] = coords;
 		i++;
 	}
+	ft_lstdel(&coord_list, f);
 	return (coord_array);
 }
 
