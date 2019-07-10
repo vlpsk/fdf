@@ -57,15 +57,15 @@ void 	free_coord_array(t_coord ***coord_array, int max_y, int max_x)
 void	free_map(t_map *map, int max_y, int max_x)
 {
 	void	(*f)(void *, size_t);
-	int 	i;
-	int 	j;
-	t_list	*tmp;
+	//int 	i;
+	//int 	j;
+	//t_list	*tmp;
 
 	f = del_list;
-	/*ft_lstdel(&(map->coord_list), f);
-	free(map->coord_list);
-	free_coord_array(map->coord_array, max_y, max_x);*/
-	i = 0;
+	ft_lstdel(&(map->coord_list), f);
+	free_coord_array(map->coord_array, max_y, max_x);
+	//free(map->coord_list);
+	/*i = 0;
 	while (i <= max_y)
 	{
 		j = 0;
@@ -74,14 +74,18 @@ void	free_map(t_map *map, int max_y, int max_x)
 			tmp = (map->coord_list)->next;
 			free((map->coord_array)[i][j]);
 			if (map->coord_list != NULL)
+			{
+				(void)map->coord_list->content_size;
 				free(map->coord_list);
+				ft_lstdelone(&(map->coord_list), del_list)
+			}
 			map->coord_list = tmp;
 			j++;
 		}
 		free((map->coord_array)[i]);
 		i++;
-	}
-	free((map->coord_array));
+	}*/
+	//free((map->coord_array));
 	free(map);
 }
 
