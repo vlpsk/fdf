@@ -27,13 +27,20 @@ int		get_color(int z, t_fdf *fdf)
 	return (color);
 }
 
-void 	free_coord_array(t_coord ***coord_array, int max_y)
+void 	free_coord_array(t_coord ***coord_array, int max_y, int max_x)
 {
 	int i;
+	int j;
 
 	i = 0;
 	while (i <= max_y)
 	{
+		j = 0;
+		while (j <= max_x)
+		{
+			free(coord_array[i][j]);
+			j++;
+		}
 		free(coord_array[i]);
 		i++;
 	}
@@ -505,7 +512,7 @@ int 	change_base_color(int keycode, t_fdf *fdf)
 
 void	close_program(t_fdf *fdf)
 {
-	free_coord_array(fdf->map->coord_array, fdf->map->max_y);
+	free_coord_array(fdf->map->coord_array, fdf->map->max_y, fdf->map->max_x);
 	free(fdf->map);
 	free(fdf);
 	exit(0);
@@ -589,7 +596,7 @@ void	draw_with_image(int max_x, int max_y, t_coord ***coord_array, int color_inf
 	
 	if (!(fdf = init_fdf(max_x, max_y, coord_array, color_info)))
 	{
-		free_coord_array(coord_array, max_y);
+		free_coord_array(coord_array, max_y, max_x);
 		exit(0);
 	}
 	draw(fdf);
@@ -804,6 +811,17 @@ void	free_coord_list_and_exit(t_list *coord_list)
 	exit(0);
 }
 
+void	free_coord_list_and_exit_parsed(t_list *coord_list, char **parsed)
+{
+	void	(*f)(void *, size_t);
+
+	f = del_list;
+	ft_lstdel(&coord_list, f);
+	free_parsed(parsed);
+	ft_putendl("map error");
+	exit(0);
+}
+
 t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 {
 	int		x;
@@ -822,19 +840,19 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 			{
 				x = 0;
 				if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
-					free_coord_list_and_exit(coord_list);
+					free_coord_list_and_exit_parsed(coord_list, parsed);
 			}
 			else
-				free_coord_list_and_exit(coord_list);
+				free_coord_list_and_exit_parsed(coord_list, parsed);
 		}
 		else
 		{
 			x = 0;
 			if (!(coord_list = coord_iteration(parsed, &x, y, coord_list, color_info)))
-				free_coord_list_and_exit(coord_list);
+				free_coord_list_and_exit_parsed(coord_list, parsed);
 		}
 		*y = *y + 1;
-		free(parsed);
+		free_parsed(parsed);
 	}
 	*max_x = x - 1;
 	*y = *y - 1;
@@ -843,25 +861,27 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 
 t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 {
-	void	(*f)(void *, size_t);
+	//void	(*f)(void *, size_t);
 	t_coord	***coord_array;
 	t_coord	**coords;
 	int		i;
 	int		j;
+	t_list	*begin_list;
 
 	i = 0;
-	f = del_list;
+	//f = del_list;
+	begin_list = coord_list;
 	printf("max_x: %d, max_y: %d\n", max_x, max_y);
 	if (!(coord_array = (t_coord ***)malloc(sizeof(t_coord **) * (max_y + 1))))
 		return (NULL);
 	while (i <= max_y)
 	{
-		j = 0;
 		if (!(coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1))))
 		{
-			free_coord_array(coord_array, i);
+			free_coord_array(coord_array, i, j);
 			free_coord_list_and_exit(coord_list);
 		}
+		j = 0;
 		while (j <= max_x)
 		{
 			if (coord_list)
@@ -874,7 +894,9 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 		coord_array[i] = coords;
 		i++;
 	}
-	ft_lstdel(&coord_list, f);
+	//ft_lstdel(&coord_list, f);
+	coord_list = begin_list;
+	//ft_lstdel(&coord_list, f);
 	return (coord_array);
 }
 

@@ -10,7 +10,7 @@
 #                                                                              #
 # **************************************************************************** #
 
-FLAGS = -Wall -Wextra -Werror -I ./includes -L ./libs -lft  -lmlx -framework OpenGL -framework AppKit
+FLAGS = -g -Wall -Wextra -Werror -I ./includes -L ./libs -lft  -lmlx -framework OpenGL -framework AppKit
 
 SRC = fdf.c
 
