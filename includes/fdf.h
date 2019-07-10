@@ -65,6 +65,7 @@ typedef struct	s_map
 	int		max_x;
 	int		max_y;
 	t_coord ***coord_array;
+	t_list	*coord_list;
 }				t_map;
 
 typedef	struct	s_offset

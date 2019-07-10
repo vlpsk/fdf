@@ -27,24 +27,62 @@ int		get_color(int z, t_fdf *fdf)
 	return (color);
 }
 
+void	del_list(void *content, size_t content_size)
+{
+	free(content);
+	(void)content_size;
+}
+
 void 	free_coord_array(t_coord ***coord_array, int max_y, int max_x)
 {
 	int i;
-	int j;
+	//int j;
 
+	i = 0;
+	(void)max_x;
+	while (i <= max_y)
+	{
+		/*j = 0;
+		while (j <= max_x)
+		{
+			free(coord_array[i][j]);
+			j++;
+		}*/
+		free(coord_array[i]);
+		i++;
+	}
+	free(coord_array);
+}
+
+void	free_map(t_map *map, int max_y, int max_x)
+{
+	void	(*f)(void *, size_t);
+	int 	i;
+	int 	j;
+	t_list	*tmp;
+
+	f = del_list;
+	/*ft_lstdel(&(map->coord_list), f);
+	free(map->coord_list);
+	free_coord_array(map->coord_array, max_y, max_x);*/
 	i = 0;
 	while (i <= max_y)
 	{
 		j = 0;
 		while (j <= max_x)
 		{
-			free(coord_array[i][j]);
+			tmp = (map->coord_list)->next;
+			free((map->coord_array)[i][j]);
+			if (map->coord_list != NULL)
+				free(map->coord_list);
+			map->coord_list = tmp;
 			j++;
 		}
-		free(coord_array[i]);
+		free((map->coord_array)[i]);
 		i++;
 	}
-	free(coord_array);
+	free((map->coord_array));
+	free(map);
 }
 
 int		get_light(int start, int end, double percentage)
@@ -239,7 +277,7 @@ t_offset	init_offset()
 	return (offset);
 }
 
-t_map	*init_map(int max_x, int max_y, t_coord ***coord_array)
+t_map	*init_map(int max_x, int max_y, t_coord ***coord_array, t_list *coord_list)
 {
 	t_map	*map;
 
@@ -248,6 +286,7 @@ t_map	*init_map(int max_x, int max_y, t_coord ***coord_array)
 	map->max_x = max_x;
 	map->max_y = max_y;
 	map->coord_array = coord_array;
+	map->coord_list = coord_list;
 	return (map);
 }
 
@@ -263,7 +302,7 @@ t_mouse	init_mouse()
 	return (mouse);
 }
 
-t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
+t_fdf	*init_fdf(t_map *map, int color_info)
 {
 	t_fdf	*fdf;
 
@@ -281,11 +320,7 @@ t_fdf	*init_fdf(int max_x, int max_y, t_coord ***coord_array, int color_info)
 	fdf->multiplier = 1;
 	fdf->color_info = color_info;
 	fdf->base_color = (fdf->color_info) ? 0xFFFFFF : 0xF44242;
-	if (!(fdf->map = init_map(max_x, max_y, coord_array)))
-	{
-		free(fdf);
-		return (NULL);
-	}
+	fdf->map = map;
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();
 	fdf->projection = PARALLEL;
@@ -512,8 +547,8 @@ int 	change_base_color(int keycode, t_fdf *fdf)
 
 void	close_program(t_fdf *fdf)
 {
-	free_coord_array(fdf->map->coord_array, fdf->map->max_y, fdf->map->max_x);
-	free(fdf->map);
+	free_map(fdf->map, fdf->map->max_y, fdf->map->max_x);
+	//free(fdf->map);
 	free(fdf);
 	exit(0);
 }
@@ -590,13 +625,13 @@ int		mouse_released(int button, int x, int y, void *param)
 	return (0);
 }
 
-void	draw_with_image(int max_x, int max_y, t_coord ***coord_array, int color_info)
+void	draw_with_image(int max_x, int max_y, t_map *map, int color_info)
 {
 	t_fdf	*fdf;
 	
-	if (!(fdf = init_fdf(max_x, max_y, coord_array, color_info)))
+	if (!(fdf = init_fdf(map, color_info)))
 	{
-		free_coord_array(coord_array, max_y, max_x);
+		free_map(map, max_y, max_x);
 		exit(0);
 	}
 	draw(fdf);
@@ -795,12 +830,6 @@ int 	check_number_of_elements(char **parsed, int x)
 		return (1);
 }
 
-void	del_list(void *content, size_t content_size)
-{
-	free(content);
-	(void)content_size;
-}
-
 void	free_coord_list_and_exit(t_list *coord_list)
 {
 	void	(*f)(void *, size_t);
@@ -859,7 +888,7 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 	return (coord_list);
 }
 
-t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
+t_coord ***convert_to_array(t_list **coord_list, int max_x, int max_y)
 {
 	//void	(*f)(void *, size_t);
 	t_coord	***coord_array;
@@ -870,7 +899,7 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 
 	i = 0;
 	//f = del_list;
-	begin_list = coord_list;
+	begin_list = *coord_list;
 	printf("max_x: %d, max_y: %d\n", max_x, max_y);
 	if (!(coord_array = (t_coord ***)malloc(sizeof(t_coord **) * (max_y + 1))))
 		return (NULL);
@@ -879,15 +908,15 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 		if (!(coords = (t_coord **)malloc(sizeof(t_coord *) * (max_x + 1))))
 		{
 			free_coord_array(coord_array, i, j);
-			free_coord_list_and_exit(coord_list);
+			free_coord_list_and_exit(*coord_list);
 		}
 		j = 0;
 		while (j <= max_x)
 		{
 			if (coord_list)
 			{
-				coords[j] = (t_coord *)coord_list->content;
-				coord_list = coord_list->next;
+				coords[j] = (t_coord *)((*coord_list)->content);
+				*coord_list = (*coord_list)->next;
 			}
 			j++;
 		}
@@ -895,7 +924,7 @@ t_coord ***convert_to_array(t_list *coord_list, int max_x, int max_y)
 		i++;
 	}
 	//ft_lstdel(&coord_list, f);
-	coord_list = begin_list;
+	*coord_list = begin_list;
 	//ft_lstdel(&coord_list, f);
 	return (coord_array);
 }
@@ -908,6 +937,7 @@ void	read_map(char *filename)
 	int		color_info;
 	t_list	*coord_list;
 	t_coord	***coord_array;
+	t_map	*map;
 
 	fd = open(filename, O_RDONLY);
 	if (fd == -1)
@@ -918,11 +948,16 @@ void	read_map(char *filename)
 	color_info = 0;
 	coord_list = get_coords(fd, &max_x, &max_y, &color_info);
 	ft_lstreverse(&coord_list);
-	coord_array = convert_to_array(coord_list, max_x, max_y);
+	coord_array = convert_to_array(&coord_list, max_x, max_y);
+	if (!(map = init_map(max_x, max_y, coord_array, coord_list)))
+	{
+		free_coord_array(coord_array, max_y, max_x);
+		return ;
+	}
 	//create_window(max_x, y, coord_list);
 	//draw_bresen_lines(max_x, max_y, coord_list);
 	//draw_bresen_lines_array(max_x, max_y, coord_array);
-	draw_with_image(max_x, max_y, coord_array, color_info);
+	draw_with_image(max_x, max_y, map, color_info);
 }
 
 char		*ft_scan(char *buff, char *str, char *tmp)
