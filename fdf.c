@@ -820,6 +820,7 @@ t_list	*coord_iteration(char **parsed, int *x, int *y, t_list *coord_list, int *
 			coord_list = ft_lstnew(coord, sizeof(t_coord));
 		else
 			ft_lstadd(&coord_list, ft_lstnew(coord, sizeof(t_coord)));
+		free(coord);
 		free_parsed(split_value);
 		*x = *x + 1;
 	}
@@ -886,6 +887,7 @@ t_list	*get_coords(int fd, int *max_x, int *y, int *color_info)
 		}
 		*y = *y + 1;
 		free_parsed(parsed);
+		free(line);
 	}
 	*max_x = x - 1;
 	*y = *y - 1;
@@ -964,62 +966,15 @@ void	read_map(char *filename)
 	draw_with_image(max_x, max_y, map, color_info);
 }
 
-char		*ft_scan(char *buff, char *str, char *tmp)
-{
-	int		index;
-
-	index = 0;
-	while (read(0, buff, 1))
-	{
-		if (index != 0)
-		{
-			free(tmp);
-			tmp = (char *)malloc(sizeof(char) * index);
-			tmp = str;
-			free(str);
-		}
-		str = (char *)malloc(sizeof(char) * (index + 1));
-		if (tmp != NULL)
-			str = tmp;
-		if (buff[0] == '\n' || buff[0] == EOF || buff[0] == '\r')
-			break ;
-		str[index] = buff[0];
-		str[index + 1] = '\0';
-		index++;
-	}
-	if (buff[0] != '\n')
-		write(1, "\n", 1);
-	return (str);
-}
-
 int		main(int argc, char **argv)
 {
 
-	/*if (argc != 2)
+	if (argc != 2)
 	{
 		ft_putendl("usage: ./fdf source_file");
 		return (1);
 	}
 	else
 		read_map(argv[1]);
-	return (0);*/
-
-	char scanbuff[1];
-	char *str;
-	char *tmp;
-
-	if (argc < 2)
-	{
-		str = NULL;
-		tmp = NULL;
-		str = ft_scan(scanbuff, str, tmp);
-		read_map(str);
-	}
-	else if (argc == 2)
-		read_map(argv[1]);
-	else
-	{
-		ft_putendl("usage: ./fdf source_file");
-		return (1);
-	}
+	return (0);
 }

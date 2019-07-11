@@ -12,14 +12,16 @@
 
 FLAGS = -g -Wall -Wextra -Werror -I ./includes -L ./libs -lft  -lmlx -framework OpenGL -framework AppKit
 
-SRC = fdf.c
+SRCDIR = sources/
+
+SRC = main.c
 
 NAME = fdf
 
 all: $(NAME)
 
 $(NAME):
-	gcc $(SRC) $(FLAGS) -o $(NAME)
+	gcc $(SRCDIR)*.c $(FLAGS) -o $(NAME)
 
 clean:
 	/bin/rm -f *.o
@@ -29,3 +31,4 @@ fclean: clean
 	/bin/rm -f $(NAME)
 
 re: fclean all
+
