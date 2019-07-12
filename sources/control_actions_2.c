@@ -60,6 +60,7 @@ int		change_base_color(int keycode, t_fdf *fdf)
 
 void	close_program(t_fdf *fdf)
 {
+	mlx_destroy_image(fdf->mlx_ptr, fdf->image);
 	free_map(fdf->map, fdf->map->max_y, fdf->map->max_x);
 	free(fdf);
 	exit(0);

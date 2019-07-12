@@ -168,5 +168,6 @@ int				rotate(int keycode, t_fdf *fdf);
 int				set_projection(int keycode, t_fdf *fdf);
 int				change_base_color(int keycode, t_fdf *fdf);
 void			close_program(t_fdf *fdf);
+void			pixel_put(t_fdf *fdf, int x, int y, int color);
 
 #endif

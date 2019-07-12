@@ -12,7 +12,7 @@
 
 #include "fdf.h"
 
-static	void	pixel_put(t_fdf *fdf, int x, int y, int color)
+void			pixel_put(t_fdf *fdf, int x, int y, int color)
 {
 	int i;
 

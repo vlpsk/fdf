@@ -14,10 +14,8 @@
 
 void	redraw(t_fdf *fdf)
 {
-	mlx_destroy_image(fdf->mlx_ptr, fdf->image);
-	fdf->image = mlx_new_image(fdf->mlx_ptr, WINDOW_WIDTH, WINDOW_HEIGHT);
-	fdf->addresses = mlx_get_data_addr(fdf->image, &(fdf->bits_per_pixel),
-		&(fdf->size_line), &(fdf->endian));
+	ft_bzero(fdf->addresses, WINDOW_WIDTH * WINDOW_HEIGHT *
+		(fdf->bits_per_pixel / 8));
 	draw(fdf);
 	print_menu(fdf);
 }
