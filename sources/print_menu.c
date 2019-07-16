@@ -26,6 +26,8 @@ static	void	print_menu_2(t_fdf *fdf, int y)
 		0xFFFFFF, "Y-Axis: Q/E");
 	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20,
 		0xFFFFFF, "Z-Axis: A/D");
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y += 30,
+		0xFFFFFF, "Exit: ESC");
 }
 
 static	void	print_color_menu(t_fdf *fdf)
@@ -33,15 +35,15 @@ static	void	print_color_menu(t_fdf *fdf)
 	int y;
 
 	y = WINDOW_HEIGHT - 200;
-	mlx_string_put(fdf->mlx_ptr, fdf->window, 25, y,
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 300, y,
 		0xFFFFFF, "Change color");
-	mlx_string_put(fdf->mlx_ptr, fdf->window, 25, y += 30,
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 275, y += 30,
 		0xFFFFFF, "decrement/increment");
-	mlx_string_put(fdf->mlx_ptr, fdf->window, 50, y += 20,
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20,
 		0xFFFFFF, "Red: R/T");
-	mlx_string_put(fdf->mlx_ptr, fdf->window, 50, y += 20,
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20,
 		0xFFFFFF, "Green: G/H");
-	mlx_string_put(fdf->mlx_ptr, fdf->window, 50, y += 20,
+	mlx_string_put(fdf->mlx_ptr, fdf->window, WINDOW_WIDTH - 250, y += 20,
 		0xFFFFFF, "Blue: B/N");
 }
 

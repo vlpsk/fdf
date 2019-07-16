@@ -37,11 +37,14 @@ void		free_coord_list_and_exit(t_list *coord_list)
 	exit(0);
 }
 
-void		free_coord_list_and_exit_parsed(t_list *coord_list, char **parsed)
+void		free_coord_list_and_exit_parsed(t_list *coord_list, char **parsed,
+	t_color *color_info)
 {
 	void	(*f)(void *, size_t);
 
 	f = del_list;
+	free(color_info->mid_height);
+	free(color_info);
 	ft_lstdel(&coord_list, f);
 	free_parsed(parsed);
 	ft_putendl("map error");

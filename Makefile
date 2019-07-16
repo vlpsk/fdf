@@ -32,6 +32,7 @@ $(NAME):
 		$(SRC_DIR)/line_and_projection.c $(SRC_DIR)/main.c \
 		$(SRC_DIR)/map_checks.c $(SRC_DIR)/print_menu.c \
 		$(SRC_DIR)/reading_map.c $(SRC_DIR)/rotation.c \
+		$(SRC_DIR)/pop_color_info.c \
 		$(FLAGS) $(INCLUDES) $(LIBRARIES) -o $(NAME)
 
 clean:

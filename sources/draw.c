@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "fdf.h"
+#include <stdio.h>
 
 static	t_coord	project_offset(t_coord *first, int val, int gap, t_fdf *fdf)
 {
@@ -36,13 +37,16 @@ static	t_coord	project_offset(t_coord *first, int val, int gap, t_fdf *fdf)
 }
 
 void			draw_with_image(int max_x, int max_y, t_map *map,
-	int color_info)
+	t_color *color_info)
 {
 	t_fdf	*fdf;
 
 	if (!(fdf = init_fdf(map, color_info)))
 	{
+		ft_putendl("error: memory allocation failed");
 		free_map(map, max_y, max_x);
+		free(color_info->mid_height);
+		free(color_info);
 		exit(0);
 	}
 	draw(fdf);
@@ -92,9 +96,9 @@ void			draw(t_fdf *fdf)
 
 	coord_array = fdf->map->coord_array;
 	if (fdf->map->max_x > fdf->map->max_y)
-		fdf->gap = (WINDOW_WIDTH / 2) / fdf->map->max_x * fdf->zoom;
+		fdf->gap = ((WINDOW_WIDTH - 305) / 2) / fdf->map->max_x * fdf->zoom;
 	else
-		fdf->gap = (WINDOW_WIDTH / 2) / fdf->map->max_y * fdf->zoom;
+		fdf->gap = ((WINDOW_WIDTH - 305) / 2) / fdf->map->max_y * fdf->zoom;
 	gap = fdf->gap;
 	midx = (fdf->map->max_x) / 2;
 	midy = (fdf->map->max_y) / 2;
@@ -114,7 +118,8 @@ t_offset		calculate_offset(t_coord *first, t_coord *last, int val,
 
 	start = project_offset(first, val, fdf->gap, fdf);
 	end = project_offset(last, val, fdf->gap, fdf);
-	offset.offset_x = WINDOW_WIDTH / 2 - (start.x + ((end.x - start.x) / 2));
+	offset.offset_x = (WINDOW_WIDTH - 305) / 2 - (start.x + ((end.x - start.x)
+		/ 2));
 	offset.offset_y = WINDOW_HEIGHT / 2 - (start.y + ((end.y - start.y) / 2));
 	return (offset);
 }

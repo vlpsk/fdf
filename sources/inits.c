@@ -59,7 +59,7 @@ t_camera	init_camera(void)
 	return (camera);
 }
 
-t_fdf		*init_fdf(t_map *map, int color_info)
+t_fdf		*init_fdf(t_map *map, t_color *color_info)
 {
 	t_fdf	*fdf;
 
@@ -78,7 +78,7 @@ t_fdf		*init_fdf(t_map *map, int color_info)
 	fdf->gap = 0;
 	fdf->multiplier = 1;
 	fdf->color_info = color_info;
-	fdf->base_color = (fdf->color_info) ? 0xFFFFFF : 0xF44242;
+	fdf->base_color = (fdf->color_info->color_info) ? 0xFFFFFF : BASE_COLOR;
 	fdf->map = map;
 	fdf->camera = init_camera();
 	fdf->offset = init_offset();

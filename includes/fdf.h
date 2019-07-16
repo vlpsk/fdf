@@ -22,6 +22,10 @@
 # define WINDOW_HEIGHT 768
 # define OFFSET 200
 
+# define BASE_COLOR 0xFBA257
+# define UP_COLOR 0xF44242
+# define DOWN_COLOR 0x4874BF
+
 # define KEY_A 0
 # define KEY_S 1
 # define KEY_D 2
@@ -93,6 +97,13 @@ typedef struct	s_mouse
 	int		previous_y;
 }				t_mouse;
 
+typedef	struct	s_color
+{
+	int		color_info;
+	int		*mid_height;
+	int		size;
+}				t_color;
+
 typedef struct	s_fdf
 {
 	void		*mlx_ptr;
@@ -105,7 +116,7 @@ typedef struct	s_fdf
 	int			zoom;
 	int			gap;
 	int			multiplier;
-	int			color_info;
+	t_color		*color_info;
 	int			base_color;
 	t_map		*map;
 	t_camera	camera;
@@ -115,18 +126,18 @@ typedef struct	s_fdf
 }				t_fdf;
 
 void			read_map(char *filename);
-t_list			*get_coords(int fd, int *max_x, int *y, int *color_info);
+t_list			*get_coords(int fd, int *max_x, int *y, t_color *color_info);
 void			free_coord_list(t_list *coord_list);
 void			free_coord_list_and_exit(t_list *coord_list);
 void			free_coord_list_and_exit_parsed(t_list *coord_list,
-	char **parsed);
+	char **parsed, t_color *color_info);
 void			free_parsed(char **parsed);
 void			free_coord_array(t_coord ***coord_array, int max_y, int max_x);
 void			free_map(t_map *map, int max_y, int max_x);
 void			free_convert_to_array(t_coord ***coord_array,
 	t_list **coord_list, int i, int j);
 t_list			*coord_iteration(char **parsed, t_coord *maxes,
-	t_list *coord_list, int *color_info);
+	t_list *coord_list, t_color *color_info);
 int				is_decimal(char *str);
 int				ft_ishex(char c);
 int				is_hexadecimal_color(char *str);
@@ -140,9 +151,9 @@ t_map			*init_map(int max_x, int max_y, t_coord ***coord_array,
 	t_list *coord_list);
 t_mouse			init_mouse();
 t_camera		init_camera();
-t_fdf			*init_fdf(t_map *map, int color_info);
+t_fdf			*init_fdf(t_map *map, t_color *color_info);
 void			draw_with_image(int max_x, int max_y, t_map *map,
-	int color_info);
+	t_color *color_info);
 void			print_menu(t_fdf *fdf);
 void			draw(t_fdf	*fdf);
 t_offset		calculate_offset(t_coord *first, t_coord *last, int val,
@@ -169,5 +180,9 @@ int				set_projection(int keycode, t_fdf *fdf);
 int				change_base_color(int keycode, t_fdf *fdf);
 void			close_program(t_fdf *fdf);
 void			pixel_put(t_fdf *fdf, int x, int y, int color);
+void			mem_alloc_failed(void);
+int				pop_color_info(t_color *color_info, t_coord *coord, int *tmp,
+	int i);
+void			not_file(void);
 
 #endif

@@ -12,40 +12,47 @@
 
 #include "fdf.h"
 
-static	int	with_color(char **split_value, t_coord *coord, int *color_info)
+static	int	with_color(char **split_value, t_coord *coord, t_color *color_info)
 {
 	if (is_decimal(split_value[0]))
 	{
 		coord->z = ft_atoi(split_value[0]);
 		coord->old_z = coord->z;
-		return (1);
+		if (is_hexadecimal_color(split_value[1]))
+		{
+			coord->color = ft_hextoi(split_value[1]);
+			color_info->color_info = 1;
+			return (1);
+		}
+		else
+			return (0);
 	}
 	else
 		return (0);
-	if (is_hexadecimal_color(split_value[1]))
+}
+
+static	int	without_color(char **split_value, t_coord *coord,
+	t_color *color_info)
+{
+	int		*tmp;
+	int		i;
+
+	tmp = NULL;
+	if (is_decimal(split_value[0]))
 	{
-		coord->color = ft_hextoi(split_value[1]);
-		*color_info = 1;
+		coord->z = ft_atoi(split_value[0]);
+		coord->old_z = coord->z;
+		coord->color = BASE_COLOR;
+		i = 0;
+		if (pop_color_info(color_info, coord, tmp, i) == 0)
+			return (0);
 		return (1);
 	}
 	else
 		return (0);
 }
 
-static	int	without_color(char **split_value, t_coord *coord)
-{
-	if (is_decimal(split_value[0]))
-	{
-		coord->z = ft_atoi(split_value[0]);
-		coord->old_z = coord->z;
-		coord->color = 0xF44242;
-		return (1);
-	}
-	else
-		return (0);
-}
-
-static	int	parse_coord(char **split_value, t_coord *coord, int *color_info)
+static	int	parse_coord(char **split_value, t_coord *coord, t_color *color_info)
 {
 	if (ft_len(split_value) == 2)
 	{
@@ -56,7 +63,7 @@ static	int	parse_coord(char **split_value, t_coord *coord, int *color_info)
 	}
 	else if (ft_len(split_value) == 1)
 	{
-		if (without_color(split_value, coord) == 0)
+		if (without_color(split_value, coord, color_info) == 0)
 			return (0);
 		else
 			return (1);
@@ -66,7 +73,7 @@ static	int	parse_coord(char **split_value, t_coord *coord, int *color_info)
 }
 
 t_list		*coord_iteration(char **parsed, t_coord *maxes, t_list *coord_list,
-	int *color_info)
+	t_color *color_info)
 {
 	t_coord	*coord;
 	char	**split_value;

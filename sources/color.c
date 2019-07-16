@@ -36,11 +36,13 @@ static	double	get_percent(int start, int end, int current)
 int				get_color(int z, t_fdf *fdf)
 {
 	int color;
+	int	mid;
 
-	if (z > 0)
-		color = 0xFBA257;
-	else if (z < 0)
-		color = 0x4874BF;
+	mid = fdf->color_info->mid_height[(fdf->color_info->size / 2) - 1];
+	if (z > mid)
+		color = UP_COLOR;
+	else if (z < mid)
+		color = DOWN_COLOR;
 	else
 		color = fdf->base_color;
 	return (color);

@@ -17,7 +17,7 @@ void			pixel_put(t_fdf *fdf, int x, int y, int color)
 	int i;
 
 	i = 0;
-	if (!(x > WINDOW_WIDTH - 300 && y < 300))
+	if (!(x > WINDOW_WIDTH - 305))
 	{
 		if (x >= 0 && x < WINDOW_WIDTH && y >= 0 && y < WINDOW_HEIGHT)
 		{
@@ -89,7 +89,7 @@ static	void	bresen_alg(t_coord start_coord, t_coord end_coord, t_fdf *fdf)
 
 void			line_bresen(t_coord start_coord, t_coord end_coord, t_fdf *fdf)
 {
-	if (fdf->color_info == 0)
+	if (fdf->color_info->color_info == 0)
 	{
 		start_coord.color = get_color(start_coord.old_z, fdf);
 		end_coord.color = get_color(end_coord.old_z, fdf);

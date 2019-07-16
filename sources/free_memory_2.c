@@ -45,3 +45,15 @@ void	free_convert_to_array(t_coord ***coord_array, t_list **coord_list,
 	free_coord_array(coord_array, i, j);
 	free_coord_list_and_exit(*coord_list);
 }
+
+void	mem_alloc_failed(void)
+{
+	ft_putendl("error: memory allocation failed");
+	exit(1);
+}
+
+void	not_file(void)
+{
+	ft_putendl("error: programm requires file, not directory");
+	exit(1);
+}
