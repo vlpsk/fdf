@@ -1,4 +1,7 @@
 # fdf
+
+![](images/42.png)
+
 This was a student project for the **School 21** (Russian franchise of the French **Ecole 42**).
 The goal of the project was to visualize the height maps (sample maps are provided in the maps directory).
 The used graphic library **minilibx** was provided by the Schoool 21.
