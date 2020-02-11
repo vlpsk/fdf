@@ -10,7 +10,7 @@
 #                                                                              #
 # **************************************************************************** #
 
-LIBFT_DIR = libft
+LIBFT_DIR = Libft
 MINILIBX_DIR = minilibx_macos
 FLAGS = -g -Wall -Wextra -Werror
 INCLUDES = -I ./includes
